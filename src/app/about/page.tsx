@@ -7,7 +7,7 @@ const TEAM = [
   {
     name: 'Bari Kaneno',
     role: 'Founder & Lead Developer',
-    img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+    img: '/team/bari.png',
   },
   {
     name: 'Merryness Melchiory',
@@ -15,9 +15,9 @@ const TEAM = [
     img: '/team/merry.png',
   },
   {
-    name: 'Developer',
-    role: 'Frontend & Mobile',
-    img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+    name: 'Nyakato Gaudentia',
+    role: 'Advisor',
+    img: '/team/nayakat.png',
   },
 ]
 
