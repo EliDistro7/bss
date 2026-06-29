@@ -1,0 +1,168 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #000000;
+    color: #e8e8e8;
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+
+  p {
+    font-family: var(--font-body);
+    font-weight: 300;
+    color: #888888;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
+}
+
+@layer components {
+  /* Section wrapper */
+  .section-pad {
+    @apply py-24 md:py-36;
+  }
+
+  .container-site {
+    @apply max-w-site mx-auto px-6 md:px-12 lg:px-20;
+  }
+
+  /* Eyebrow label above headings */
+  .eyebrow {
+    @apply font-body text-xs tracking-widest uppercase text-bss-muted mb-4;
+    font-family: var(--font-body);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+  }
+
+  /* Large editorial display text */
+  .display-xl {
+    @apply font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tightest text-bss-white;
+  }
+
+  .display-lg {
+    @apply font-display text-4xl md:text-5xl font-bold leading-tight tracking-tight text-bss-white;
+  }
+
+  .display-md {
+    @apply font-display text-3xl md:text-4xl font-bold leading-snug tracking-tight text-bss-white;
+  }
+
+  /* Body text variants */
+  .body-lead {
+    @apply text-lg md:text-xl font-body font-light text-bss-subtle leading-relaxed;
+  }
+
+  .body-base {
+    @apply text-base font-body font-light text-bss-subtle leading-relaxed;
+  }
+
+  /* Thin horizontal divider */
+  .rule {
+    @apply border-0 border-t border-bss-border;
+  }
+
+  /* Primary button — white fill */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-8 py-4 bg-bss-white text-bss-black 
+           text-sm font-body font-medium tracking-wide
+           transition-all duration-200 hover:bg-bss-offwhite active:scale-95;
+  }
+
+  /* Ghost button — outline */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-8 py-4 border border-bss-border text-bss-white 
+           text-sm font-body font-medium tracking-wide
+           transition-all duration-200 hover:border-bss-white active:scale-95;
+  }
+
+  /* Card surface */
+  .card {
+    @apply bg-bss-card border border-bss-border;
+  }
+
+  /* Animated underline link */
+  .link-underline {
+    @apply relative inline-block text-bss-white;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-px bg-bss-white transition-all duration-300;
+  }
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Tab button */
+  .tab-btn {
+    @apply relative px-1 py-3 text-sm font-body font-medium text-bss-muted 
+           transition-colors duration-200 hover:text-bss-white whitespace-nowrap;
+  }
+  .tab-btn.active {
+    @apply text-bss-white;
+  }
+  .tab-btn.active::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-px bg-bss-white;
+  }
+
+  /* Pricing table row */
+  .price-row {
+    @apply flex items-center justify-between py-5 border-b border-bss-border;
+  }
+
+  /* FAQ item */
+  .faq-item {
+    @apply border-b border-bss-border;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-body    { font-family: var(--font-body); }
+}
