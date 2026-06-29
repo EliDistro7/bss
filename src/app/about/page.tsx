@@ -17,7 +17,7 @@ const TEAM = [
   {
     name: 'Nyakato Gaudentia',
     role: 'Advisor',
-    img: '/team/nayakat.png',
+    img: '/team/nyakato.png',
   },
 ]
 
