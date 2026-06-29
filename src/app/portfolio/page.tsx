@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useLang } from '../../lib/i18n/LanguageContext'
-import { projects, ProjectCategory } from '../../lib/data/projects'
+import { projects, ProjectCategory } from '../../lib/data/projects';
 import clsx from 'clsx'
 
 type Filter = 'all' | ProjectCategory
