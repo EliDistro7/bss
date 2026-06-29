@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent, ChangeEvent } from "react";
+import { Suspense, useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useAdminAuth } from "../../../../lib/hooks/useAdminAuth";
@@ -34,7 +34,9 @@ const EMPTY_FORM: PortfolioInput = {
   published: false,
 };
 
-export default function PortfolioFormPage() {
+// ─── Inner component (safe to call useSearchParams here) ──────────────────────
+
+function PortfolioForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
@@ -118,7 +120,7 @@ export default function PortfolioFormPage() {
 
       if (pdfFile) {
         setUploadingPdf(true);
-        await uploadEpub(item._id, pdfFile); // endpoint reused
+        await uploadEpub(item._id, pdfFile);
         setUploadingPdf(false);
       }
 
@@ -329,5 +331,15 @@ export default function PortfolioFormPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// ─── Page export — provides the required Suspense boundary ────────────────────
+
+export default function PortfolioFormPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bss-black" />}>
+      <PortfolioForm />
+    </Suspense>
   );
 }
