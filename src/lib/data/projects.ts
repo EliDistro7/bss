@@ -14,17 +14,7 @@ export interface Project {
 
 // All images from Unsplash – free to use as placeholders
 export const projects: Project[] = [
-  {
-    id: 'p1',
-    title: 'Zanzibar Contractors Ltd — Company Profile',
-    titleSw: 'Zanzibar Contractors Ltd — Maelezo ya Kampuni',
-    category: 'profile',
-    client: 'Zanzibar Contractors Ltd',
-    year: '2024',
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
-    description: '28-page print-ready profile for a Zanzibar-based civil construction firm bidding on government contracts.',
-    descriptionSw: 'Maelezo ya kurasa 28 tayari kwa uchapishaji kwa kampuni ya ujenzi wa kiraia ya Zanzibar inayotoa zabuni za mikataba ya serikali.',
-  },
+
   {
     id: 'p2',
     title: 'Summit Realty — Corporate Website',
