@@ -36,7 +36,7 @@ function PortfolioTeaser() {
 
   useEffect(() => {
     listPortfolio()
-      .then(all => setItems(all.slice(0, 5)))
+      .then(all => setItems(all.slice(0, 10)))
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
   }, [])
