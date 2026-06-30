@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs"
+   "postinstall": "node scripts/setup-pdf-worker.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
