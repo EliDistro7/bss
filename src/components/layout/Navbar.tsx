@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useLang } from '../../lib/i18n/LanguageContext'
 import clsx from 'clsx'
@@ -38,16 +37,17 @@ export default function Navbar() {
       )}
     >
       <nav className="container-site flex items-center justify-between h-18 md:h-20">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 shrink-0">
-          <Image
-            src="/bss-logo.png"
-            alt="BSS — Bari Software Services"
-            width={40}
-            height={40}
-            className="w-9 h-9 object-contain"
-          />
-          <span className="hidden sm:block font-body text-xs tracking-widest uppercase text-bss-subtle font-medium">
+        {/* Logo — text wordmark, scales naturally across breakpoints */}
+        <Link href="/" className="group flex items-center gap-3 shrink-0">
+          <span
+            className="font-display font-black uppercase leading-none tracking-tighter
+                       text-2xl md:text-3xl text-bss-white
+                       inline-block group-hover:skew-x-0
+                       transition-transform duration-300"
+          >
+            BSS
+          </span>
+          <span className="hidden sm:block font-body text-2xs md:text-xs tracking-widest uppercase text-bss-subtle font-medium border-l border-bss-border pl-3 leading-tight max-w-[7rem]">
             Bari Software Services
           </span>
         </Link>
