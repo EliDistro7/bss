@@ -2,7 +2,25 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { useLang } from '../lib/i18n/LanguageContext'
+import { listPortfolio } from '../lib/api/portfolio'
+import type { PortfolioItem } from '../lib/api/portfolio'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Stat {
+  value: string
+  labelKey: 'statsLabel1' | 'statsLabel2' | 'statsLabel3'
+}
+
+const STATS: Stat[] = [
+  { value: '30+', labelKey: 'statsLabel1' },
+  { value: '20+', labelKey: 'statsLabel2' },
+  { value: '3+',  labelKey: 'statsLabel3' },
+]
 
 const SERVICES_OVERVIEW = [
   { key: 'profile',  href: '/services' },
@@ -10,13 +28,103 @@ const SERVICES_OVERVIEW = [
   { key: 'app',      href: '/services' },
   { key: 'card',     href: '/services' },
   { key: 'proposal', href: '/services' },
-]
+] as const
 
-const STATS = [
-  { value: '80+',  labelKey: 'statsLabel1' as const },
-  { value: '60+',  labelKey: 'statsLabel2' as const },
-  { value: '3+',   labelKey: 'statsLabel3' as const },
-]
+// ---------------------------------------------------------------------------
+// Portfolio teaser — fetches live data, falls back gracefully
+// ---------------------------------------------------------------------------
+
+function PortfolioTeaser() {
+  const { t, locale } = useLang()
+  const [items, setItems]   = useState<PortfolioItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    listPortfolio()
+      .then(all => setItems(all.slice(0, 3)))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <section className="section-pad border-t border-bss-border">
+      <div className="container-site">
+        {/* Header row */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+          <div>
+            <p className="eyebrow">{t.nav.portfolio}</p>
+            <h2 className="display-md">{t.portfolio.headline}</h2>
+          </div>
+          <Link
+            href="/portfolio"
+            className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white shrink-0"
+          >
+            {t.common.viewWork} →
+          </Link>
+        </div>
+
+        {/* Grid */}
+        {loading ? (
+          // Skeleton — same 3-cell grid so layout doesn't shift
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="aspect-[4/3] bg-bss-surface animate-pulse"
+              />
+            ))}
+          </div>
+        ) : items.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
+            {items.map(item => (
+              <Link
+                key={item._id}
+                href={`/portfolio#${item._id}`}
+                className="group relative block aspect-[4/3] bg-bss-black overflow-hidden"
+              >
+                {item.coverUrl ? (
+                  <Image
+                    src={item.coverUrl}
+                    alt={locale === 'sw' ? item.titleSw : item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-bss-surface flex items-center justify-center">
+                    <span className="text-2xs tracking-widest uppercase text-bss-muted">No cover</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <p className="text-2xs tracking-wider uppercase text-bss-muted mb-1">
+                    {item.client} · {item.year}
+                  </p>
+                  <span className="text-sm font-display font-bold text-bss-white leading-tight line-clamp-2">
+                    {locale === 'sw' ? item.titleSw : item.title}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          // Fallback: no items returned — show a plain CTA so the section isn't empty
+          <div className="border border-bss-border py-16 flex flex-col items-center gap-4">
+            <p className="body-base text-bss-muted">Browse our full portfolio</p>
+            <Link href="/portfolio" className="btn-ghost text-sm">
+              View work →
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 
 export default function HomePage() {
   const { t } = useLang()
@@ -33,36 +141,25 @@ export default function HomePage() {
     <>
       {/* ── HERO ─────────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col justify-end pb-20 md:pb-28 overflow-hidden">
-        {/* Background image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=75"
+            src="/skrapers/dar.png"
             alt="Modern architecture — hero background"
             fill
             className="object-cover opacity-20"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-bss-black via-bss-black/60 to-bss-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-bss-black via-bss-black/30 to-bss-black/10" />
         </div>
 
         <div className="container-site relative z-10 pt-40">
           <p className="eyebrow mb-6">{t.home.heroEyebrow}</p>
-
-          <h1 className="display-xl max-w-4xl mb-8">
-            {t.home.heroHeadline}
-          </h1>
-
-          <p className="body-lead max-w-prose mb-12">
-            {t.home.heroSub}
-          </p>
+          <h1 className="display-xl max-w-4xl mb-8">{t.home.heroHeadline}</h1>
+          <p className="body-lead max-w-prose mb-12">{t.home.heroSub}</p>
 
           <div className="flex flex-wrap gap-4">
-            <Link href="/portfolio" className="btn-primary">
-              {t.home.heroCta}
-            </Link>
-            <Link href="/contact" className="btn-ghost">
-              {t.home.heroCtaSecond}
-            </Link>
+            <Link href="/portfolio" className="btn-primary">{t.home.heroCta}</Link>
+            <Link href="/contact"   className="btn-ghost">{t.home.heroCtaSecond}</Link>
           </div>
         </div>
       </section>
@@ -92,24 +189,30 @@ export default function HomePage() {
               <h2 className="display-lg max-w-sm">{t.home.servicesHeadline}</h2>
             </div>
             <div className="md:flex md:items-end">
-              <Link href="/services" className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white">
+              <Link
+                href="/services"
+                className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white"
+              >
                 {t.common.learnMore} →
               </Link>
             </div>
           </div>
 
-          {/* Service list */}
           <div>
             {SERVICES_OVERVIEW.map(({ key, href }, i) => (
               <Link key={key} href={href} className="group block">
                 <div className="flex items-center justify-between py-6 border-t border-bss-border group-hover:border-bss-subtle transition-colors duration-200">
                   <div className="flex items-baseline gap-6">
-                    <span className="text-xs font-body text-bss-muted w-6">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-xs font-body text-bss-muted w-6">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                     <span className="font-display text-2xl md:text-3xl font-bold text-bss-white group-hover:translate-x-1 transition-transform duration-200">
-                      {serviceNames[key as keyof typeof serviceNames]}
+                      {serviceNames[key]}
                     </span>
                   </div>
-                  <span className="text-bss-muted group-hover:text-bss-white group-hover:translate-x-1 transition-all duration-200 text-lg">→</span>
+                  <span className="text-bss-muted group-hover:text-bss-white group-hover:translate-x-1 transition-all duration-200 text-lg">
+                    →
+                  </span>
                 </div>
               </Link>
             ))}
@@ -126,13 +229,11 @@ export default function HomePage() {
               <p className="eyebrow">{t.home.whyEyebrow}</p>
               <h2 className="display-lg mb-6">{t.home.whyHeadline}</h2>
               <p className="body-lead mb-8">{t.home.whyBody}</p>
-              <Link href="/about" className="btn-ghost">
-                {t.common.learnMore}
-              </Link>
+              <Link href="/about" className="btn-ghost">{t.common.learnMore}</Link>
             </div>
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&q=80"
+                src="/industries/smart_link.png"
                 alt="BSS — construction and real estate focus"
                 fill
                 className="object-cover opacity-80"
@@ -142,41 +243,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PORTFOLIO TEASER ─────────────────────────────── */}
-      <section className="section-pad border-t border-bss-border">
-        <div className="container-site">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-            <div>
-              <p className="eyebrow">{t.nav.portfolio}</p>
-              <h2 className="display-md">{t.portfolio.headline}</h2>
-            </div>
-            <Link href="/portfolio" className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white shrink-0">
-              {t.common.viewWork} →
-            </Link>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-            {[
-              { img: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=600&q=75', label: 'Company Profile' },
-              { img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=75',   label: 'Website' },
-              { img: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=75', label: 'Mobile App' },
-            ].map(({ img, label }) => (
-              <Link key={label} href="/portfolio" className="group relative block aspect-[4/3] bg-bss-black overflow-hidden">
-                <Image
-                  src={img}
-                  alt={label}
-                  fill
-                  className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
-                <span className="absolute bottom-4 left-4 text-xs tracking-wider uppercase font-body font-medium text-bss-white">
-                  {label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── PORTFOLIO TEASER (live data) ─────────────────── */}
+      <PortfolioTeaser />
 
       {/* ── CTA BANNER ───────────────────────────────────── */}
       <section className="border-t border-bss-border">
