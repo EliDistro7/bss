@@ -1,22 +1,17 @@
 // lib/polyfills/uint8array.ts
 //
-// Polyfills for TC39's Uint8Array base64/hex methods
-// (https://github.com/tc39/proposal-arraybuffer-base64).
-// pdf.js's internal code calls these directly, and support is still
-// rolling out across browsers, so we shim them in globally before
-// anything that depends on them runs — including main-thread pdf.js
-// calls, not just the worker.
-
-declare global {
-  interface Uint8Array {
-    toHex(): string
-    toBase64(): string
-  }
-  interface Uint8ArrayConstructor {
-    fromHex(hex: string): Uint8Array
-    fromBase64(base64: string): Uint8Array
-  }
-}
+// Polyfills for newer TC39 proposals that pdf.js 6.x depends on:
+// - Uint8Array.prototype.toHex/fromHex/toBase64/fromBase64
+//   (https://github.com/tc39/proposal-arraybuffer-base64)
+// - Map.prototype.getOrInsertComputed / WeakMap.prototype.getOrInsertComputed
+//   (https://github.com/tc39/proposal-upsert)
+//
+// All of these are already declared (non-optionally) in TypeScript's
+// lib.esnext.d.ts when "esnext" is in tsconfig's "lib" array — so no
+// `declare global` augmentation is needed at all. TS knows the types;
+// actual browsers just don't all implement them yet. This file only
+// patches the runtime behavior, guarded by feature checks so it's a
+// no-op wherever the browser already supports them natively.
 
 if (typeof window !== 'undefined') {
   if (!Uint8Array.prototype.toHex) {
@@ -49,6 +44,24 @@ if (typeof window !== 'undefined') {
       const bytes = new Uint8Array(binary.length)
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
       return bytes
+    }
+  }
+
+  if (!Map.prototype.getOrInsertComputed) {
+    Map.prototype.getOrInsertComputed = function (this: Map<unknown, unknown>, key, callbackFn) {
+      if (this.has(key)) return this.get(key)
+      const value = callbackFn(key)
+      this.set(key, value)
+      return value
+    }
+  }
+
+  if (!WeakMap.prototype.getOrInsertComputed) {
+    WeakMap.prototype.getOrInsertComputed = function (this: WeakMap<WeakKey, unknown>, key, callbackFn) {
+      if (this.has(key)) return this.get(key)
+      const value = callbackFn(key)
+      this.set(key, value)
+      return value
     }
   }
 }
