@@ -6,22 +6,46 @@
 // - Map.prototype.getOrInsertComputed / WeakMap.prototype.getOrInsertComputed
 //   (https://github.com/tc39/proposal-upsert)
 //
-// All of these are already declared (non-optionally) in TypeScript's
-// lib.esnext.d.ts when "esnext" is in tsconfig's "lib" array — so no
-// `declare global` augmentation is needed at all. TS knows the types;
-// actual browsers just don't all implement them yet. This file only
-// patches the runtime behavior, guarded by feature checks so it's a
-// no-op wherever the browser already supports them natively.
+// Whether these are already declared in TS's lib types is inconsistent
+// between editors (tsserver) and `next build` (tsc via the project's
+// actual tsconfig), so rather than fight `declare global` conflicts in
+// one direction or the other, we cast through `unknown` at the
+// assignment site. This avoids "Property does not exist" errors when
+// the lib lacks the type, and avoids "overload signatures must agree"
+// errors when the lib already has it declared non-optionally.
+
+type Uint8ArrayPolyfilled = Uint8Array & {
+  toHex?: () => string
+  toBase64?: () => string
+}
+
+type Uint8ArrayCtorPolyfilled = Uint8ArrayConstructor & {
+  fromHex?: (hex: string) => Uint8Array
+  fromBase64?: (base64: string) => Uint8Array
+}
+
+type MapPolyfilled = Map<unknown, unknown> & {
+  getOrInsertComputed?: (key: unknown, callbackFn: (key: unknown) => unknown) => unknown
+}
+
+type WeakMapPolyfilled = WeakMap<WeakKey, unknown> & {
+  getOrInsertComputed?: (key: WeakKey, callbackFn: (key: WeakKey) => unknown) => unknown
+}
 
 if (typeof window !== 'undefined') {
-  if (!Uint8Array.prototype.toHex) {
-    Uint8Array.prototype.toHex = function (this: Uint8Array) {
+  const u8proto = Uint8Array.prototype as Uint8ArrayPolyfilled
+  const u8ctor = Uint8Array as unknown as Uint8ArrayCtorPolyfilled
+  const mapProto = Map.prototype as MapPolyfilled
+  const weakMapProto = WeakMap.prototype as WeakMapPolyfilled
+
+  if (!u8proto.toHex) {
+    u8proto.toHex = function (this: Uint8Array) {
       return Array.from(this, (b) => b.toString(16).padStart(2, '0')).join('')
     }
   }
 
-  if (!Uint8Array.fromHex) {
-    Uint8Array.fromHex = function (hex: string) {
+  if (!u8ctor.fromHex) {
+    u8ctor.fromHex = function (hex: string) {
       const bytes = new Uint8Array(hex.length / 2)
       for (let i = 0; i < bytes.length; i++) {
         bytes[i] = parseInt(hex.substr(i * 2, 2), 16)
@@ -30,16 +54,16 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  if (!Uint8Array.prototype.toBase64) {
-    Uint8Array.prototype.toBase64 = function (this: Uint8Array) {
+  if (!u8proto.toBase64) {
+    u8proto.toBase64 = function (this: Uint8Array) {
       let binary = ''
       for (let i = 0; i < this.length; i++) binary += String.fromCharCode(this[i])
       return btoa(binary)
     }
   }
 
-  if (!Uint8Array.fromBase64) {
-    Uint8Array.fromBase64 = function (base64: string) {
+  if (!u8ctor.fromBase64) {
+    u8ctor.fromBase64 = function (base64: string) {
       const binary = atob(base64)
       const bytes = new Uint8Array(binary.length)
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
@@ -47,8 +71,8 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  if (!Map.prototype.getOrInsertComputed) {
-    Map.prototype.getOrInsertComputed = function (this: Map<unknown, unknown>, key, callbackFn) {
+  if (!mapProto.getOrInsertComputed) {
+    mapProto.getOrInsertComputed = function (this: Map<unknown, unknown>, key, callbackFn) {
       if (this.has(key)) return this.get(key)
       const value = callbackFn(key)
       this.set(key, value)
@@ -56,8 +80,8 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  if (!WeakMap.prototype.getOrInsertComputed) {
-    WeakMap.prototype.getOrInsertComputed = function (this: WeakMap<WeakKey, unknown>, key, callbackFn) {
+  if (!weakMapProto.getOrInsertComputed) {
+    weakMapProto.getOrInsertComputed = function (this: WeakMap<WeakKey, unknown>, key, callbackFn) {
       if (this.has(key)) return this.get(key)
       const value = callbackFn(key)
       this.set(key, value)
