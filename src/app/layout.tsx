@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import '../lib/polyfills/uint8array'
 // @ts-ignore: allow global CSS import without module declarations
 import './globals.css'
 import { LangProvider } from '../lib/i18n/LanguageContext'
