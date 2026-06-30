@@ -6,10 +6,8 @@ import { useEffect, useState } from 'react'
 import { useLang } from '../lib/i18n/LanguageContext'
 import { listPortfolio } from '../lib/api/portfolio'
 import type { PortfolioItem } from '../lib/api/portfolio'
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import PortfolioCard from '../components/PortfolioCard'
+import PortfolioModal from '../components/PortfolioModal'
 
 interface Stat {
   value: string
@@ -30,14 +28,11 @@ const SERVICES_OVERVIEW = [
   { key: 'proposal', href: '/services' },
 ] as const
 
-// ---------------------------------------------------------------------------
-// Portfolio teaser — fetches live data, falls back gracefully
-// ---------------------------------------------------------------------------
-
 function PortfolioTeaser() {
   const { t, locale } = useLang()
-  const [items, setItems]   = useState<PortfolioItem[]>([])
+  const [items, setItems]     = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<string | null>(null)
 
   useEffect(() => {
     listPortfolio()
@@ -46,10 +41,11 @@ function PortfolioTeaser() {
       .finally(() => setLoading(false))
   }, [])
 
+  const selectedItem = items.find(p => p._id === selected)
+
   return (
     <section className="section-pad border-t border-bss-border">
       <div className="container-site">
-        {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <p className="eyebrow">{t.nav.portfolio}</p>
@@ -63,87 +59,24 @@ function PortfolioTeaser() {
           </Link>
         </div>
 
-        {/* Grid */}
         {loading ? (
-          // Skeleton — same 3-cell grid so layout doesn't shift
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
             {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                className="aspect-[4/3] bg-bss-surface animate-pulse"
-              />
+              <div key={i} className="aspect-[4/3] bg-bss-surface animate-pulse" />
             ))}
           </div>
         ) : items.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-            {items.map(item => {
-              const title = locale === 'sw' ? item.titleSw : item.title
-              const cardInner = (
-                <>
-                  {item.coverUrl ? (
-                    <>
-                      {/* Mobile: natural image size, normal document flow */}
-                      <Image
-                        src={item.coverUrl}
-                        alt={title}
-                        width={800}
-                        height={600}
-                        sizes="100vw"
-                        className="block sm:hidden w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                      />
-                      {/* sm+ : cropped fill, fixed-ratio grid cell */}
-                      <Image
-                        src={item.coverUrl}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 1024px) 50vw, 33vw"
-                        className="hidden sm:block object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                      />
-                    </>
-                  ) : (
-                    <div className="static sm:absolute sm:inset-0 aspect-[4/3] sm:aspect-auto bg-bss-surface flex items-center justify-center">
-                      <span className="text-2xs tracking-widest uppercase text-bss-muted">No cover</span>
-                    </div>
-                  )}
-                  <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
-
-               <div className="static sm:absolute bottom-0 left-0 right-0 p-4 bg-bss-black sm:bg-transparent">
-                    <p className="text-2xs tracking-wider uppercase text-bss-muted mb-1">
-                      {item.client} · {item.year}
-                    </p>
-                    <span className="text-sm font-display font-bold text-bss-white leading-tight line-clamp-2">
-                      {title}
-                    </span>
-                  </div>
-                  
-                </>
-              )
-
-              const cardClass =
-                'group relative block sm:aspect-[4/3] bg-bss-black overflow-hidden'
-
-              // Websites/apps with a live link go straight to that link.
-              // Everything else (documents — profile, card, proposal, or any
-              // item without a link) routes internally to the portfolio page.
-              return item.link ? (
-                <a
-                  key={item._id}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cardClass}
-                >
-                  {cardInner}
-                </a>
-              ) : (
-                <Link key={item._id} href={`/portfolio#${item._id}`} className={cardClass}>
-                  {cardInner}
-                </Link>
-              )
-            })}
+            {items.map(item => (
+              <PortfolioCard
+                key={item._id}
+                item={item}
+                title={locale === 'sw' ? item.titleSw : item.title}
+                onClick={() => setSelected(item._id)}
+              />
+            ))}
           </div>
         ) : (
-          // Fallback: no items returned — show a plain CTA so the section isn't empty
           <div className="border border-bss-border py-16 flex flex-col items-center gap-4">
             <p className="body-base text-bss-muted">Browse our full portfolio</p>
             <Link href="/portfolio" className="btn-ghost text-sm">
@@ -152,13 +85,13 @@ function PortfolioTeaser() {
           </div>
         )}
       </div>
+
+      {selectedItem && (
+        <PortfolioModal item={selectedItem} onClose={() => setSelected(null)} />
+      )}
     </section>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
 
 export default function HomePage() {
   const { t } = useLang()
@@ -173,7 +106,6 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ── HERO ─────────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col justify-end pb-20 md:pb-28 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
@@ -198,7 +130,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── STATS ────────────────────────────────────────── */}
       <section className="border-t border-bss-border">
         <div className="container-site">
           <div className="grid grid-cols-3 divide-x divide-bss-border">
@@ -214,7 +145,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SERVICES OVERVIEW ────────────────────────────── */}
       <section className="section-pad border-t border-bss-border">
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-6 md:gap-0 mb-16">
@@ -255,7 +185,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── WHY BSS ──────────────────────────────────────── */}
       <section className="section-pad border-t border-bss-border">
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -277,10 +206,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PORTFOLIO TEASER (live data) ─────────────────── */}
       <PortfolioTeaser />
 
-      {/* ── CTA BANNER ───────────────────────────────────── */}
       <section className="border-t border-bss-border">
         <div className="container-site py-20 md:py-28 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
