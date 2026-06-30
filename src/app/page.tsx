@@ -8,6 +8,7 @@ import { listPortfolio } from '../lib/api/portfolio'
 import type { PortfolioItem } from '../lib/api/portfolio'
 import PortfolioCard from '../components/PortfolioCard'
 import PortfolioModal from '../components/PortfolioModal'
+import TeamSection from '../components/TeamSection'
 
 interface Stat {
   value: string
@@ -207,6 +208,9 @@ export default function HomePage() {
       </section>
 
       <PortfolioTeaser />
+
+            {/* ── TEAM ─────────────────────────────────────────── */}
+      <TeamSection />
 
       <section className="border-t border-bss-border">
         <div className="container-site py-20 md:py-28 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
