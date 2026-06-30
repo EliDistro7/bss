@@ -76,37 +76,58 @@ function PortfolioTeaser() {
           </div>
         ) : items.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-            {items.map(item => (
-              <Link
-                key={item._id}
-                href={`/portfolio#${item._id}`}
-                className="group relative block aspect-[4/3] bg-bss-black overflow-hidden"
-              >
-                {item.coverUrl ? (
-                  <Image
-                    src={item.coverUrl}
-                    alt={locale === 'sw' ? item.titleSw : item.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-bss-surface flex items-center justify-center">
-                    <span className="text-2xs tracking-widest uppercase text-bss-muted">No cover</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
+            {items.map(item => {
+              const title = locale === 'sw' ? item.titleSw : item.title
+              const cardInner = (
+                <>
+                  {item.coverUrl ? (
+                    <Image
+                      src={item.coverUrl}
+                      alt={title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-bss-surface flex items-center justify-center">
+                      <span className="text-2xs tracking-widest uppercase text-bss-muted">No cover</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
 
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-2xs tracking-wider uppercase text-bss-muted mb-1">
-                    {item.client} · {item.year}
-                  </p>
-                  <span className="text-sm font-display font-bold text-bss-white leading-tight line-clamp-2">
-                    {locale === 'sw' ? item.titleSw : item.title}
-                  </span>
-                </div>
-              </Link>
-            ))}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-2xs tracking-wider uppercase text-bss-muted mb-1">
+                      {item.client} · {item.year}
+                    </p>
+                    <span className="text-sm font-display font-bold text-bss-white leading-tight line-clamp-2">
+                      {title}
+                    </span>
+                  </div>
+                </>
+              )
+
+              const cardClass =
+                'group relative block aspect-[4/3] bg-bss-black overflow-hidden'
+
+              // Websites/apps with a live link go straight to that link.
+              // Everything else (documents — profile, card, proposal, or any
+              // item without a link) routes internally to the portfolio page.
+              return item.link ? (
+                <a
+                  key={item._id}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cardClass}
+                >
+                  {cardInner}
+                </a>
+              ) : (
+                <Link key={item._id} href={`/portfolio#${item._id}`} className={cardClass}>
+                  {cardInner}
+                </Link>
+              )
+            })}
           </div>
         ) : (
           // Fallback: no items returned — show a plain CTA so the section isn't empty

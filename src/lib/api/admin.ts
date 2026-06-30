@@ -15,6 +15,7 @@ export interface PortfolioItem {
   year: string;
   description: string;
   descriptionSw: string;
+  link: string;
   coverUrl: string;
   epubKey: string;
   published: boolean;
@@ -145,7 +146,7 @@ export async function getPortfolioItem(id: string) {
 
 export type PortfolioInput = Pick<
   PortfolioItem,
-  "title" | "titleSw" | "category" | "client" | "year" | "description" | "descriptionSw" | "published"
+  "title" | "titleSw" | "category" | "client" | "year" | "description" | "descriptionSw" | "link" | "published"
 >;
 
 export async function createPortfolioItem(input: PortfolioInput) {

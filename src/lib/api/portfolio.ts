@@ -14,6 +14,7 @@ export interface PortfolioItem {
   year: string
   description: string
   descriptionSw: string
+  link: string
   coverUrl: string
   epubKey: string
   published: boolean
@@ -27,6 +28,7 @@ export async function listPortfolio(category?: PortfolioCategory): Promise<Portf
   const res = await fetch(url.toString(), { next: { revalidate: 60 } })
   if (!res.ok) throw new Error(`Failed to fetch portfolio: ${res.status}`)
   const data = await res.json()
+  //console.log(data.data);
   return data.data as PortfolioItem[]
 }
 

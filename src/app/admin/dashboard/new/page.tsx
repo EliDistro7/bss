@@ -31,6 +31,7 @@ const EMPTY_FORM: PortfolioInput = {
   year: String(new Date().getFullYear()),
   description: "",
   descriptionSw: "",
+  link: "",
   published: false,
 };
 
@@ -72,6 +73,7 @@ function PortfolioForm() {
           year: item.year,
           description: item.description,
           descriptionSw: item.descriptionSw,
+          link: item.link,
           published: item.published,
         });
         setCoverUrl(item.coverUrl);
@@ -148,6 +150,8 @@ function PortfolioForm() {
   if (status === "checking" || loading) {
     return <div className="min-h-screen bg-bss-black" />;
   }
+
+  const isWebOrApp = form.category === "website" || form.category === "app";
 
   const inputClass =
     "bg-bss-surface border border-bss-border text-bss-white px-4 py-3 text-sm w-full " +
@@ -237,6 +241,25 @@ function PortfolioForm() {
               />
             </div>
 
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>
+                Link {isWebOrApp ? "*" : "(optional)"}
+              </label>
+              <input
+                type="url"
+                required={isWebOrApp}
+                placeholder="https://example.com"
+                className={inputClass}
+                value={form.link}
+                onChange={(e) => updateField("link", e.target.value)}
+              />
+              <p className="text-xs text-bss-muted">
+                {isWebOrApp
+                  ? "Live site or app store URL — required for websites and apps."
+                  : "Live site or app store URL. Leave blank if this item shouldn't link out."}
+              </p>
+            </div>
+
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -273,42 +296,44 @@ function PortfolioForm() {
             </div>
           </div>
 
-          {/* ── PDF ── */}
-          <div className="card p-6 flex flex-col gap-4">
-            <h2 className="font-display text-lg text-bss-white">PDF file</h2>
-            {hasPdf && !pdfFile && (
-              <div className="flex items-center justify-between text-sm text-bss-white border border-bss-border px-4 py-3">
-                <span>A PDF is currently attached.</span>
-                {isEdit && (
-                  <button
-                    type="button"
-                    onClick={handleRemovePdf}
-                    className="text-red-400 text-xs uppercase tracking-wide"
-                  >
-                    Remove
-                  </button>
+          {/* ── PDF (not applicable to websites/apps — they link out instead) ── */}
+          {!isWebOrApp && (
+            <div className="card p-6 flex flex-col gap-4">
+              <h2 className="font-display text-lg text-bss-white">PDF file</h2>
+              {hasPdf && !pdfFile && (
+                <div className="flex items-center justify-between text-sm text-bss-white border border-bss-border px-4 py-3">
+                  <span>A PDF is currently attached.</span>
+                  {isEdit && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePdf}
+                      className="text-red-400 text-xs uppercase tracking-wide"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <label className="btn-ghost cursor-pointer text-xs px-5 py-3 self-start">
+                  {pdfFile ? "Change file" : hasPdf ? "Replace PDF" : "Choose PDF"}
+                  <input
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    onChange={handlePdfSelect}
+                    className="hidden"
+                  />
+                </label>
+                {pdfFile && <p className="text-xs text-bss-muted">{pdfFile.name}</p>}
+                {uploadingPdf && <p className="text-xs text-bss-muted">Uploading…</p>}
+                {!isEdit && (
+                  <p className="text-xs text-bss-muted">
+                    Saving will create the item, then attach this PDF.
+                  </p>
                 )}
               </div>
-            )}
-            <div className="flex flex-col gap-2">
-              <label className="btn-ghost cursor-pointer text-xs px-5 py-3 self-start">
-                {pdfFile ? "Change file" : hasPdf ? "Replace PDF" : "Choose PDF"}
-                <input
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  onChange={handlePdfSelect}
-                  className="hidden"
-                />
-              </label>
-              {pdfFile && <p className="text-xs text-bss-muted">{pdfFile.name}</p>}
-              {uploadingPdf && <p className="text-xs text-bss-muted">Uploading…</p>}
-              {!isEdit && (
-                <p className="text-xs text-bss-muted">
-                  Saving will create the item, then attach this PDF.
-                </p>
-              )}
             </div>
-          </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-400" role="alert">
