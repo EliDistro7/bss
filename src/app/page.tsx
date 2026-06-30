@@ -81,21 +81,33 @@ function PortfolioTeaser() {
               const cardInner = (
                 <>
                   {item.coverUrl ? (
-                    <Image
-                      src={item.coverUrl}
-                      alt={title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
-                    />
+                    <>
+                      {/* Mobile: natural image size, normal document flow */}
+                      <Image
+                        src={item.coverUrl}
+                        alt={title}
+                        width={800}
+                        height={600}
+                        sizes="100vw"
+                        className="block sm:hidden w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                      />
+                      {/* sm+ : cropped fill, fixed-ratio grid cell */}
+                      <Image
+                        src={item.coverUrl}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 33vw"
+                        className="hidden sm:block object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                      />
+                    </>
                   ) : (
-                    <div className="absolute inset-0 bg-bss-surface flex items-center justify-center">
+                    <div className="static sm:absolute sm:inset-0 aspect-[4/3] sm:aspect-auto bg-bss-surface flex items-center justify-center">
                       <span className="text-2xs tracking-widest uppercase text-bss-muted">No cover</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
+                  <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-bss-black/80 to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
+               <div className="static sm:absolute bottom-0 left-0 right-0 p-4 bg-bss-black sm:bg-transparent">
                     <p className="text-2xs tracking-wider uppercase text-bss-muted mb-1">
                       {item.client} · {item.year}
                     </p>
@@ -103,11 +115,12 @@ function PortfolioTeaser() {
                       {title}
                     </span>
                   </div>
+                  
                 </>
               )
 
               const cardClass =
-                'group relative block aspect-[4/3] bg-bss-black overflow-hidden'
+                'group relative block sm:aspect-[4/3] bg-bss-black overflow-hidden'
 
               // Websites/apps with a live link go straight to that link.
               // Everything else (documents — profile, card, proposal, or any
