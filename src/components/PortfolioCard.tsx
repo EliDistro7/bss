@@ -75,9 +75,10 @@ export default function PortfolioCard({ item, title, onClick }: PortfolioCardPro
       )}
 
       <div className="absolute bottom-0 left-0 right-0 p-5">
-        <p className="text-2xs tracking-wider uppercase font-medium text-bss-muted mb-1">
+    {/*    <p className="text-2xs tracking-wider uppercase font-medium text-bss-muted mb-1">
           {item.client} · {item.year}
         </p>
+        */}
         <p className="font-display text-lg font-bold text-bss-white leading-tight line-clamp-2">
           {title}
         </p>
