@@ -25,7 +25,7 @@ export default function PortfolioCard({ item, title, onClick }: PortfolioCardPro
       )}
     >
       {item.coverUrl ? (
-        isDocument ? (
+      
           <>
             {/* Mobile: natural size, normal flow — image itself sets the card's height */}
             <Image
@@ -45,15 +45,7 @@ export default function PortfolioCard({ item, title, onClick }: PortfolioCardPro
               className="hidden sm:block object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
             />
           </>
-        ) : (
-          <Image
-            src={item.coverUrl}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
-          />
-        )
+        
       ) : (
         <div
           className={clsx(
@@ -70,7 +62,7 @@ export default function PortfolioCard({ item, title, onClick }: PortfolioCardPro
 
       {item.epubKey && (
         <span className="absolute top-3 right-3 text-2xs tracking-widest uppercase px-2 py-1 bg-bss-white text-bss-black font-medium">
-          EPUB
+          PDF
         </span>
       )}
 
