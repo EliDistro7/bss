@@ -135,26 +135,40 @@ export default function HomePage() {
       {/* ── Portfolio teaser ─────────────────────────────────────────────── */}
       <PortfolioTeaser />
 
-      {/* ── Services carousel (replaces old list) ────────────────────────── */}
+      {/* ── Services carousel ────────────────────────────────────────────── */}
       <ServicesCarousel />
 
       {/* ── Why BSS ──────────────────────────────────────────────────────── */}
-      <section className="section-pad border-t border-bss-border">
-        <div className="container-site">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
+      <section className="border-t border-bss-border overflow-hidden">
+        {/* Full-bleed image strip */}
+        <div className="relative h-[55vh] min-h-[340px] w-full">
+          <Image
+            src="/industries/smart_link.png"
+            alt="BSS — construction and real estate focus"
+            fill
+            className="object-cover opacity-60"
+          />
+          {/* Strong bottom fade so text block reads cleanly below */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bss-black/20 to-bss-black" />
+          {/* Left-side eyebrow floating on image */}
+          <div className="absolute bottom-8 left-0 right-0">
+            <div className="container-site">
               <p className="eyebrow">{t.home.whyEyebrow}</p>
-              <h2 className="display-lg mb-6">{t.home.whyHeadline}</h2>
-              <p className="body-lead mb-8">{t.home.whyBody}</p>
-              <Link href="/about" className="btn-ghost">{t.common.learnMore}</Link>
             </div>
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src="/industries/smart_link.png"
-                alt="BSS — construction and real estate focus"
-                fill
-                className="object-cover opacity-80"
-              />
+          </div>
+        </div>
+
+        {/* Text block flush below the image */}
+        <div className="container-site">
+          <div className="grid md:grid-cols-2 gap-px bg-bss-border">
+            {/* Headline cell */}
+            <div className="bg-bss-black py-12 md:py-16 pr-12">
+              <h2 className="display-lg">{t.home.whyHeadline}</h2>
+            </div>
+            {/* Body + CTA cell */}
+            <div className="bg-bss-black py-12 md:py-16 pl-12 flex flex-col justify-between gap-8">
+              <p className="body-lead text-bss-subtle">{t.home.whyBody}</p>
+              <Link href="/about" className="btn-ghost self-start">{t.common.learnMore}</Link>
             </div>
           </div>
         </div>
