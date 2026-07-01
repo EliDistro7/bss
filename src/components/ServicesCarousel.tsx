@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useLang } from '../lib/i18n/LanguageContext'
 
 // ── SVG mask shapes — bolder strokes, more presence ──────────────────────────
@@ -125,6 +125,8 @@ const TICKER = [
   'Bari Software Services', 'Tanzania',
 ]
 
+const AUTOPLAY_MS = 3500
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ServicesCarousel() {
@@ -133,20 +135,47 @@ export default function ServicesCarousel() {
 
   const trackRef  = useRef<HTMLDivElement>(null)
   const [cur, setCur] = useState(0)
+  const [paused, setPaused] = useState(false)
   const VISIBLE = 2
   const MAX     = SLIDES.length - VISIBLE
 
-  const go = useCallback((next: number) => {
-    const clamped = Math.max(0, Math.min(next, MAX))
-    setCur(clamped)
+  const go = useCallback((next: number, loop = false) => {
+    let target = next
+    if (loop) {
+      // wrap around instead of clamping, for autoplay
+      if (target > MAX) target = 0
+      if (target < 0) target = MAX
+    } else {
+      target = Math.max(0, Math.min(next, MAX))
+    }
+    setCur(target)
     const track = trackRef.current
     if (!track) return
     const slide = track.querySelector<HTMLElement>('[data-slide]')
     if (!slide) return
     const gap  = 1
     const step = slide.offsetWidth + gap
-    track.style.transform = `translateX(-${clamped * step}px)`
+    track.style.transform = `translateX(-${target * step}px)`
   }, [MAX])
+
+  // ── Autoplay ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (paused) return
+    const id = setInterval(() => {
+      setCur((prevCur) => {
+        const nextCur = prevCur >= MAX ? 0 : prevCur + 1
+        const track = trackRef.current
+        const slide = track?.querySelector<HTMLElement>('[data-slide]')
+        if (track && slide) {
+          const gap  = 1
+          const step = slide.offsetWidth + gap
+          track.style.transform = `translateX(-${nextCur * step}px)`
+        }
+        return nextCur
+      })
+    }, AUTOPLAY_MS)
+    return () => clearInterval(id)
+  }, [paused, MAX])
 
   const serviceNames: Record<ServiceKey, string> = {
     profile:  t.services.tabs.profile,
@@ -198,23 +227,33 @@ export default function ServicesCarousel() {
         </div>
 
         {/* ── Carousel ───────────────────────────────────────────────────── */}
-        <div className="overflow-hidden pb-16">
+        <div
+          className="overflow-hidden pb-16"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           <div
             ref={trackRef}
-            className="flex gap-px bg-bss-border transition-transform duration-[400ms] [cubic-bezier(0.25,0.46,0.45,0.94)]"
+            className="flex gap-px bg-bss-border transition-transform duration-[600ms] [cubic-bezier(0.25,0.46,0.45,0.94)]"
             style={{ willChange: 'transform' }}
           >
-            {SLIDES.map((slide) => (
+            {SLIDES.map((slide, i) => (
               <Link
                 key={slide.key}
                 href="/services"
                 data-slide
+                style={{
+                  animationDelay: `${i * 90}ms`,
+                }}
                 className="group relative flex-[0_0_calc(50%-0.5px)] min-w-0 overflow-hidden
                            bg-bss-card
-                           transition-colors duration-250 hover:bg-[#181818]"
+                           opacity-0 animate-[card-in_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]
+                           transition-[background-color,transform,box-shadow] duration-300 ease-out
+                           hover:bg-[#181818] hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)]
+                           will-change-transform"
               >
                 {/* mask layer */}
-                <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 z-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
                   {slide.mask}
                 </div>
 
@@ -227,9 +266,9 @@ export default function ServicesCarousel() {
                     className="flex w-max animate-[marquee_linear_infinite] whitespace-nowrap"
                     style={{ animationDuration: slide.marqueeDuration }}
                   >
-                    {Array.from({ length: 4 }).map((_, i) => (
+                    {Array.from({ length: 4 }).map((_, j) => (
                       <span
-                        key={i}
+                        key={j}
                         className="font-display text-7xl font-bold uppercase leading-none text-bss-white px-5"
                       >
                         {serviceNames[slide.key]}
