@@ -16,11 +16,11 @@ export default function PortfolioCard({ item, title, onClick }: PortfolioCardPro
   const isDocument = DOCUMENT_CATEGORIES.includes(item.category)
 
   return (
-    <button
-      onClick={onClick}
-      className="card overflow-hidden flex flex-col text-left w-full
-                 focus:outline-none focus-visible:ring-2 focus-visible:ring-bss-white focus-visible:ring-inset"
-    >
+ <button
+  onClick={onClick}
+  className="card rounded-none overflow-hidden flex flex-col text-left w-full
+             focus:outline-none focus-visible:ring-2 focus-visible:ring-bss-white focus-visible:ring-inset"
+>
       <div
         className={clsx(
           'group relative bg-bss-surface overflow-hidden',

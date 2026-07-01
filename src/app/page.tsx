@@ -37,53 +37,57 @@ function PortfolioTeaser() {
 
   const selectedItem = items.find(p => p._id === selected)
 
-  return (
-    <section className="section-pad border-t border-bss-border">
+return (
+  <section className="section-pad border-t border-bss-border">
+    {/* Header stays contained */}
+    <div className="container-site">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+        <div>
+          <h2 className="display-md">{t.portfolio.headline}</h2>
+        </div>
+        <Link
+          href="/portfolio"
+          className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white shrink-0"
+        >
+          {t.common.viewWork} →
+        </Link>
+      </div>
+    </div>
+
+    {/* Grid breaks out of container — full bleed on all screens below sm */}
+    {loading ? (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="aspect-[4/3] bg-bss-surface animate-pulse" />
+        ))}
+      </div>
+    ) : items.length > 0 ? (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
+        {items.map(item => (
+          <PortfolioCard
+            key={item._id}
+            item={item}
+            title={locale === 'sw' ? item.titleSw : item.title}
+            onClick={() => setSelected(item._id)}
+          />
+        ))}
+      </div>
+    ) : (
       <div className="container-site">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-          <div>
-            <h2 className="display-md">{t.portfolio.headline}</h2>
-          </div>
-          <Link
-            href="/portfolio"
-            className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white shrink-0"
-          >
-            {t.common.viewWork} →
+        <div className="border border-bss-border py-16 flex flex-col items-center gap-4">
+          <p className="body-base text-bss-muted">Browse our full portfolio</p>
+          <Link href="/portfolio" className="btn-ghost text-sm">
+            View work →
           </Link>
         </div>
-
-        {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-            {[0, 1, 2].map(i => (
-              <div key={i} className="aspect-[4/3] bg-bss-surface animate-pulse" />
-            ))}
-          </div>
-        ) : items.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-            {items.map(item => (
-              <PortfolioCard
-                key={item._id}
-                item={item}
-                title={locale === 'sw' ? item.titleSw : item.title}
-                onClick={() => setSelected(item._id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="border border-bss-border py-16 flex flex-col items-center gap-4">
-            <p className="body-base text-bss-muted">Browse our full portfolio</p>
-            <Link href="/portfolio" className="btn-ghost text-sm">
-              View work →
-            </Link>
-          </div>
-        )}
       </div>
+    )}
 
-      {selectedItem && (
-        <PortfolioModal item={selectedItem} onClose={() => setSelected(null)} />
-      )}
-    </section>
-  )
+    {selectedItem && (
+      <PortfolioModal item={selectedItem} onClose={() => setSelected(null)} />
+    )}
+  </section>
+)
 }
 
 export default function HomePage() {
