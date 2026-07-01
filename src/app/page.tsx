@@ -49,7 +49,6 @@ function PortfolioTeaser() {
       <div className="container-site">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="eyebrow">{t.nav.portfolio}</p>
             <h2 className="display-md">{t.portfolio.headline}</h2>
           </div>
           <Link
@@ -146,6 +145,8 @@ export default function HomePage() {
         </div>
       </section>
 
+         <PortfolioTeaser />
+
       <section className="section-pad border-t border-bss-border">
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-6 md:gap-0 mb-16">
@@ -207,7 +208,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <PortfolioTeaser />
+   
 
             {/* ── TEAM ─────────────────────────────────────────── */}
       <TeamSection />

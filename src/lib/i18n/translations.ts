@@ -15,8 +15,8 @@ export const translations = {
     // Home page
     home: {
       heroEyebrow:   'Dar es Salaam, Tanzania',
-      heroHeadline:  'We build digital presence that commands attention.',
-      heroSub:       'Company profiles, websites, mobile apps, business cards, and proposals — crafted for construction and real estate businesses that want to stand apart.',
+      heroHeadline:  'KARIBU Bari Software Services',
+      heroSub:       'Company profiles, websites, mobile apps, business cards, and proposals — kwa ajili ya biashara zinazolenga kuwa tofauti.',
       heroCta:       'View our work',
       heroCtaSecond: 'Talk to us',
       statsLabel1:   'Projects delivered',
