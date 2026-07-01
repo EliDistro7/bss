@@ -9,6 +9,7 @@ import type { PortfolioItem } from '../lib/api/portfolio'
 import PortfolioCard from '../components/PortfolioCard'
 import PortfolioModal from '../components/PortfolioModal'
 import TeamSection from '../components/TeamSection'
+import ServicesCarousel from '../components/ServicesCarousel'
 
 interface Stat {
   value: string
@@ -20,14 +21,6 @@ const STATS: Stat[] = [
   { value: '20+', labelKey: 'statsLabel2' },
   { value: '3+',  labelKey: 'statsLabel3' },
 ]
-
-const SERVICES_OVERVIEW = [
-  { key: 'profile',  href: '/services' },
-  { key: 'website',  href: '/services' },
-  { key: 'app',      href: '/services' },
-  { key: 'card',     href: '/services' },
-  { key: 'proposal', href: '/services' },
-] as const
 
 function PortfolioTeaser() {
   const { t, locale } = useLang()
@@ -96,16 +89,9 @@ function PortfolioTeaser() {
 export default function HomePage() {
   const { t } = useLang()
 
-  const serviceNames = {
-    profile:  t.services.tabs.profile,
-    website:  t.services.tabs.website,
-    app:      t.services.tabs.app,
-    card:     t.services.tabs.card,
-    proposal: t.services.tabs.proposal,
-  }
-
   return (
     <>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col justify-end pb-20 md:pb-28 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
@@ -130,6 +116,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="border-t border-bss-border">
         <div className="container-site">
           <div className="grid grid-cols-3 divide-x divide-bss-border">
@@ -145,48 +132,13 @@ export default function HomePage() {
         </div>
       </section>
 
-         <PortfolioTeaser />
+      {/* ── Portfolio teaser ─────────────────────────────────────────────── */}
+      <PortfolioTeaser />
 
-      <section className="section-pad border-t border-bss-border">
-        <div className="container-site">
-          <div className="grid md:grid-cols-2 gap-6 md:gap-0 mb-16">
-            <div>
-              <p className="eyebrow">{t.home.servicesEyebrow}</p>
-              <h2 className="display-lg max-w-sm">{t.home.servicesHeadline}</h2>
-            </div>
-            <div className="md:flex md:items-end">
-              <Link
-                href="/services"
-                className="link-underline text-sm tracking-wider uppercase font-medium text-bss-muted hover:text-bss-white"
-              >
-                {t.common.learnMore} →
-              </Link>
-            </div>
-          </div>
+      {/* ── Services carousel (replaces old list) ────────────────────────── */}
+      <ServicesCarousel />
 
-          <div>
-            {SERVICES_OVERVIEW.map(({ key, href }, i) => (
-              <Link key={key} href={href} className="group block">
-                <div className="flex items-center justify-between py-6 border-t border-bss-border group-hover:border-bss-subtle transition-colors duration-200">
-                  <div className="flex items-baseline gap-6">
-                    <span className="text-xs font-body text-bss-muted w-6">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span className="font-display text-2xl md:text-3xl font-bold text-bss-white group-hover:translate-x-1 transition-transform duration-200">
-                      {serviceNames[key]}
-                    </span>
-                  </div>
-                  <span className="text-bss-muted group-hover:text-bss-white group-hover:translate-x-1 transition-all duration-200 text-lg">
-                    →
-                  </span>
-                </div>
-              </Link>
-            ))}
-            <div className="border-t border-bss-border" />
-          </div>
-        </div>
-      </section>
-
+      {/* ── Why BSS ──────────────────────────────────────────────────────── */}
       <section className="section-pad border-t border-bss-border">
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -208,11 +160,10 @@ export default function HomePage() {
         </div>
       </section>
 
-   
-
-            {/* ── TEAM ─────────────────────────────────────────── */}
+      {/* ── Team ─────────────────────────────────────────────────────────── */}
       <TeamSection />
 
+      {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="border-t border-bss-border">
         <div className="container-site py-20 md:py-28 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
