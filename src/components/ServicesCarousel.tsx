@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -97,6 +96,7 @@ interface ServiceSlide {
   num: string
   mask: React.ReactNode
   descKey: keyof ReturnType<typeof buildDescs>
+  marqueeDuration: string
 }
 
 function buildDescs(t: ReturnType<typeof useLang>['t']) {
@@ -110,11 +110,11 @@ function buildDescs(t: ReturnType<typeof useLang>['t']) {
 }
 
 const SLIDES: ServiceSlide[] = [
-  { key: 'profile',  num: '01', mask: <MaskCircles />,  descKey: 'profileDesc'  },
-  { key: 'website',  num: '02', mask: <MaskRects />,    descKey: 'websiteDesc'  },
-  { key: 'app',      num: '03', mask: <MaskTriangle />, descKey: 'appDesc'      },
-  { key: 'card',     num: '04', mask: <MaskEllipse />,  descKey: 'cardDesc'     },
-  { key: 'proposal', num: '05', mask: <MaskLines />,    descKey: 'proposalDesc' },
+  { key: 'profile',  num: '01', mask: <MaskCircles />,  descKey: 'profileDesc',  marqueeDuration: '22s' },
+  { key: 'website',  num: '02', mask: <MaskRects />,    descKey: 'websiteDesc',  marqueeDuration: '26s' },
+  { key: 'app',      num: '03', mask: <MaskTriangle />, descKey: 'appDesc',      marqueeDuration: '19s' },
+  { key: 'card',     num: '04', mask: <MaskEllipse />,  descKey: 'cardDesc',     marqueeDuration: '24s' },
+  { key: 'proposal', num: '05', mask: <MaskLines />,    descKey: 'proposalDesc', marqueeDuration: '21s' },
 ]
 
 // ── Marquee ticker items ──────────────────────────────────────────────────────
@@ -213,8 +213,29 @@ export default function ServicesCarousel() {
                            bg-bss-card
                            transition-colors duration-250 hover:bg-[#181818]"
               >
+                {/* mask layer */}
                 <div className="absolute inset-0 z-0">
                   {slide.mask}
+                </div>
+
+                {/* marquee typographic layer — big repeating service name, low opacity */}
+                <div
+                  className="absolute inset-x-0 top-1/2 z-[1] -translate-y-1/2 overflow-hidden opacity-[0.07] pointer-events-none"
+                  aria-hidden="true"
+                >
+                  <div
+                    className="flex w-max animate-[marquee_linear_infinite] whitespace-nowrap"
+                    style={{ animationDuration: slide.marqueeDuration }}
+                  >
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="font-display text-7xl font-bold uppercase leading-none text-bss-white px-5"
+                      >
+                        {serviceNames[slide.key]}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="absolute inset-x-0 top-0 h-px bg-bss-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-20" />
