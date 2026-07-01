@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link'
@@ -142,7 +143,7 @@ export default function ServicesCarousel() {
     if (!track) return
     const slide = track.querySelector<HTMLElement>('[data-slide]')
     if (!slide) return
-    const gap  = 1          // gap-px = 1px between cards
+    const gap  = 1
     const step = slide.offsetWidth + gap
     track.style.transform = `translateX(-${clamped * step}px)`
   }, [MAX])
@@ -159,7 +160,7 @@ export default function ServicesCarousel() {
     <section className="border-t border-bss-border">
 
       {/* ── Marquee ticker ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden border-b border-bss-border py-3.5">
+      <div className="relative overflow-hidden border-b border-bss-border py-4">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-bss-black to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-bss-black to-transparent" />
 
@@ -167,10 +168,13 @@ export default function ServicesCarousel() {
           {[...TICKER, ...TICKER].map((label, i) => (
             <span
               key={i}
-              className="flex items-center gap-5 px-8 font-body text-[11px] tracking-[0.18em] uppercase text-bss-muted"
+              className="flex items-center gap-6 px-8 font-body text-sm font-semibold tracking-[0.08em] uppercase text-bss-subtle"
             >
               {label}
-              <span className="h-[4px] w-[4px] shrink-0 rounded-full bg-bss-border" />
+              {/* Diamond separator — more graphic than a dot */}
+              <svg width="6" height="6" viewBox="0 0 6 6" className="shrink-0 fill-bss-border" aria-hidden="true">
+                <rect x="3" y="0" width="4.24" height="4.24" transform="rotate(45 3 3)" />
+              </svg>
             </span>
           ))}
         </div>
@@ -181,7 +185,6 @@ export default function ServicesCarousel() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-16 pb-10">
           <div>
             <p className="eyebrow">{t.home.servicesEyebrow}</p>
-            {/* Matched display-lg to be consistent with other section heads */}
             <h2 className="display-lg max-w-sm">{t.home.servicesHeadline}</h2>
           </div>
           <Link
@@ -196,7 +199,6 @@ export default function ServicesCarousel() {
 
         {/* ── Carousel ───────────────────────────────────────────────────── */}
         <div className="overflow-hidden pb-16">
-          {/* gap-px so cards butt up tight — consistent with portfolio grid */}
           <div
             ref={trackRef}
             className="flex gap-px bg-bss-border transition-transform duration-[400ms] [cubic-bezier(0.25,0.46,0.45,0.94)]"
@@ -211,27 +213,20 @@ export default function ServicesCarousel() {
                            bg-bss-card
                            transition-colors duration-250 hover:bg-[#181818]"
               >
-                {/* SVG geometric mask — fills the whole card */}
                 <div className="absolute inset-0 z-0">
                   {slide.mask}
                 </div>
 
-                {/* subtle white top-edge on hover */}
                 <div className="absolute inset-x-0 top-0 h-px bg-bss-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-20" />
 
-                {/* top-right arrow — larger, bolder */}
                 <span className="absolute top-6 right-6 z-10 font-body text-xl text-bss-white opacity-20 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                   →
                 </span>
 
-                {/* card content — taller, bolder type */}
                 <div className="relative z-10 flex h-[280px] flex-col justify-between p-7">
-                  {/* number — top left, large and faint */}
                   <span className="font-display text-5xl font-bold text-bss-white opacity-10 leading-none select-none">
                     {slide.num}
                   </span>
-
-                  {/* name + desc — bottom */}
                   <div>
                     <p className="font-display text-2xl font-bold leading-tight text-bss-white mb-2">
                       {serviceNames[slide.key]}
@@ -270,7 +265,6 @@ export default function ServicesCarousel() {
               →
             </button>
 
-            {/* progress indicators */}
             <div className="ml-auto flex gap-1.5 items-center">
               {Array.from({ length: MAX + 1 }).map((_, i) => (
                 <button
