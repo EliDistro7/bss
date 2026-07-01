@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRef, useState, useCallback } from 'react'
 import { useLang } from '../lib/i18n/LanguageContext'
 
@@ -186,21 +187,65 @@ export default function ServicesCarousel() {
   return (
     <section className="border-t border-bss-border">
 
-      {/* ── Ticker ─────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden border-b border-bss-border py-4">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-bss-black to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-bss-black to-transparent" />
-        <div className="flex w-max animate-[marquee_30s_linear_infinite]">
-          {[...TICKER, ...TICKER].map((label, i) => (
-            <span key={i} className="flex items-center gap-6 px-8 font-body text-sm font-semibold tracking-[0.08em] uppercase text-bss-subtle">
-              {label}
-              <svg width="6" height="6" viewBox="0 0 6 6" className="shrink-0 fill-bss-border" aria-hidden="true">
-                <rect x="3" y="0" width="4.24" height="4.24" transform="rotate(45 3 3)" />
-              </svg>
-            </span>
-          ))}
-        </div>
-      </div>
+{/* ── Clients ────────────────────────────────────────────────────── */}
+<div className="border-b border-bss-border bg-bss-surface">
+  {/* Header row */}
+  <div className="container-site py-10 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+    <h2 className="display-md">Our Esteemed Clients</h2>
+    <p className="font-body text-[11px] tracking-[0.18em] uppercase text-bss-muted">
+      {new Date().getFullYear()} · Dar es Salaam, Tanzania
+    </p>
+  </div>
+
+  {/* Full-bleed marquee strip */}
+  <div className="relative overflow-hidden border-t border-bss-border">
+    {/* fade edges */}
+    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-bss-surface to-transparent" />
+    <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-bss-surface to-transparent" />
+
+    <div className="flex w-max animate-[marquee_22s_linear_infinite] hover:[animation-play-state:paused]">
+      {[...Array(4)].flatMap((_, rep) =>
+        [
+          { name: 'Magestar', full: 'Magestar Company Limited',                  src: '/clients/magestar.png' },
+          { name: 'Nelo',     full: 'Nelo Construction & Consultation Co. Ltd',  src: '/clients/nelo.png'     },
+          { name: 'Venny',    full: 'Venny Construction & Real Estate',           src: '/clients/venny.png'    },
+          { name: 'Manereja', full: 'Manereja Business Platform',                 src: '/clients/manereja.png' },
+          { name: 'Elemi',    full: 'Elemi Electrical Company Limited',           src: '/clients/elemi.jpg'    },
+        ].map((client, i) => (
+          <div
+            key={`${rep}-${i}`}
+            className="group flex flex-col items-center justify-center gap-6
+                       w-[280px] py-12 px-8 shrink-0
+                       border-r border-bss-border
+                       transition-colors duration-300 hover:bg-bss-card"
+          >
+            {/* Logo */}
+            <div className="flex items-center justify-center h-16">
+              <Image
+                src={client.src}
+                alt={client.name}
+                width={160}
+                height={64}
+                className="object-contain max-h-16 w-auto
+                           opacity-80 group-hover:opacity-100
+                           transition-opacity duration-300"
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="w-8 h-px bg-bss-border group-hover:w-16 group-hover:bg-bss-white transition-all duration-300" />
+
+            {/* Name */}
+            <p className="text-center font-display text-sm font-bold tracking-wide leading-snug text-bss-white">
+              {client.full}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+</div>
+
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="container-site">
