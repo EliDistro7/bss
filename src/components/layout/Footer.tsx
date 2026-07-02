@@ -12,7 +12,7 @@ export default function Footer() {
   const col1 = [
     { href: '/',          label: t.nav.home },
     { href: '/about',     label: t.nav.about },
-    { href: '/services',  label: t.nav.services },
+    { href: '/services/profile',  label: t.nav.services },
   ]
   const col2 = [
     { href: '/portfolio', label: t.nav.portfolio },

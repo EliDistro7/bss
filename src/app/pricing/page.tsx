@@ -13,26 +13,25 @@ type PriceRow = {
 }
 
 export default function PricingPage() {
-  const { t } = useLang()
+  const { t, locale } = useLang()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-  const rows: PriceRow[] = [
-    { service: t.services.tabs.profile,  scope: locale_scope('Up to 20 pages', 'Hadi kurasa 20'),       price: 'TZS 100,000' },
-    { service: t.services.tabs.profile,  scope: locale_scope('21 – 30 pages', 'Kurasa 21 – 30'),         price: 'TZS 150,000' },
-    { service: t.services.tabs.profile,  scope: locale_scope('31 – 40 pages', 'Kurasa 31 – 40'),         price: 'TZS 200,000' },
-    { service: t.services.tabs.profile,  scope: locale_scope('41 – 50 pages', 'Kurasa 41 – 50'),         price: 'TZS 250,000' },
-    { service: t.services.tabs.profile,  scope: locale_scope('51+ pages', 'Kurasa 51+'),                 price: 'TZS 300,000+', note: '+50k / 10 pages' },
-    { service: t.services.tabs.website,  scope: locale_scope('Static site', 'Tovuti ya kimya'),          price: 'TZS 100,000' },
-    { service: t.services.tabs.website,  scope: locale_scope('Dynamic system', 'Mfumo wa nguvu'),        price: 'TZS 150,000+' },
-    { service: t.services.tabs.app,      scope: locale_scope('Android / iOS', 'Android / iOS'),          price: t.common.quoteOnRequest },
-    { service: t.services.tabs.card,     scope: locale_scope('Standard / premium', 'Kawaida / ya hali ya juu'), price: t.common.quoteOnRequest },
-    { service: t.services.tabs.proposal, scope: locale_scope('Writing & design', 'Uandishi & muundo'),   price: t.common.quoteOnRequest },
-  ]
-
-  function locale_scope(en: string, sw: string) {
-    // We can't call useLang inside a plain function so we read from closure
-    return en  // will be overridden per instance; locale logic in render
+  function s(en: string, sw: string) {
+    return locale === 'sw' ? sw : en
   }
+
+  const rows: PriceRow[] = [
+    { service: t.services.tabs.profile,  scope: s('Up to 20 pages',          'Hadi kurasa 20'),              price: 'TZS 100,000' },
+    { service: t.services.tabs.profile,  scope: s('21 – 30 pages',           'Kurasa 21 – 30'),              price: 'TZS 150,000' },
+    { service: t.services.tabs.profile,  scope: s('31 – 40 pages',           'Kurasa 31 – 40'),              price: 'TZS 200,000' },
+    { service: t.services.tabs.profile,  scope: s('41 – 50 pages',           'Kurasa 41 – 50'),              price: 'TZS 250,000' },
+    { service: t.services.tabs.profile,  scope: s('51+ pages',               'Kurasa 51+'),                  price: 'TZS 300,000+', note: '+50k / 10 pages' },
+    { service: t.services.tabs.website,  scope: s('Static site',             'Tovuti ya kimya'),             price: 'TZS 100,000' },
+    { service: t.services.tabs.website,  scope: s('Dynamic system',          'Mfumo wa nguvu'),              price: 'TZS 150,000+' },
+    { service: t.services.tabs.app,      scope: s('Android / iOS',           'Android / iOS'),               price: t.common.quoteOnRequest },
+    { service: t.services.tabs.card,     scope: s('Standard / premium',      'Kawaida / ya hali ya juu'),    price: t.common.quoteOnRequest },
+    { service: t.services.tabs.proposal, scope: s('Writing & design',        'Uandishi & muundo'),           price: t.common.quoteOnRequest },
+  ]
 
   return (
     <>
@@ -50,17 +49,14 @@ export default function PricingPage() {
         <div className="container-site">
           {/* Table header */}
           <div className="grid grid-cols-3 pb-4 border-b border-bss-border mb-2">
-            <p className="eyebrow">Service</p>
-            <p className="eyebrow">Scope</p>
-            <p className="eyebrow text-right">Price (TZS)</p>
+            <p className="eyebrow">{s('Service', 'Huduma')}</p>
+            <p className="eyebrow">{s('Scope', 'Upeo')}</p>
+            <p className="eyebrow text-right">{s('Price (TZS)', 'Bei (TZS)')}</p>
           </div>
 
           {/* Rows */}
           {rows.map((row, i) => (
-            <div
-              key={i}
-              className="price-row grid grid-cols-3 gap-4"
-            >
+            <div key={i} className="price-row grid grid-cols-3 gap-4">
               <p className="text-sm font-body font-medium text-bss-white">{row.service}</p>
               <p className="text-sm font-body text-bss-subtle">
                 {row.scope}
@@ -89,7 +85,7 @@ export default function PricingPage() {
       {/* ── FAQ ──────────────────────────────────────────── */}
       <section className="section-pad">
         <div className="container-site max-w-prose">
-          <p className="eyebrow">{t.pricing.faqHeadline}</p>
+          <p className="eyebrow">{t.pricing.faqEyebrow}</p>
           <h2 className="display-md mb-10">{t.pricing.faqHeadline}</h2>
 
           <div>

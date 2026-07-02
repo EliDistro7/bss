@@ -8,6 +8,7 @@ import Footer from '../components/layout/Footer'
 import WhatsAppButton from '../components/ui/WhatsappButton'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://bari-software-services.online'),
   title: 'Bari Software Services | BSS',
   description: 'Company profiles, websites, mobile apps, business cards and proposals — Dar es Salaam, Tanzania.',
   keywords: ['BSS', 'Bari Software Services', 'company profile Tanzania', 'website design Dar es Salaam', 'mobile app Tanzania'],
@@ -15,6 +16,10 @@ export const metadata: Metadata = {
     title: 'Bari Software Services',
     description: 'Digital design and development studio — Dar es Salaam, Tanzania.',
     type: 'website',
+    url: 'https://bari-software-services.online',
+  },
+  alternates: {
+    canonical: 'https://bari-software-services.online',
   },
 }
 

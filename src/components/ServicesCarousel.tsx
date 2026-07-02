@@ -109,7 +109,7 @@ function ServiceCard({
 }) {
   return (
     <Link
-      href="/services"
+      href="/services/profile"
       style={{ animationDelay: `${index * 90}ms` }}
       className="group relative flex-shrink-0 w-[45vw] max-w-[420px] min-w-[280px] overflow-hidden
                  bg-bss-card
@@ -255,7 +255,7 @@ export default function ServicesCarousel() {
             <h2 className="display-lg max-w-sm">{t.home.servicesHeadline}</h2>
           </div>
           <Link
-            href="/services"
+            href="/services/profile"
             className="shrink-0 font-body text-[11px] tracking-[0.18em] uppercase text-bss-muted
                        border-b border-bss-border pb-0.5
                        transition-colors duration-200 hover:text-bss-white hover:border-bss-white"

@@ -100,8 +100,11 @@ export const translations = {
       headline:  'Clear prices. No surprises.',
       body:      'All prices in Tanzanian Shillings (TZS). Final quotes for apps, cards, and proposals depend on scope — reach out for a fast estimate.',
       note:      'Company profiles above 30 pages: add TZS 50,000 per 10 extra pages. Website and system prices are starting points.',
+ 
       ctaButton: 'Request a quote',
-      faqHeadline: 'Common questions',
+faqEyebrow: 'FAQ',           // ← add this
+faqHeadline: 'Common questions',
+
       faqs: [
         { q: 'How long does delivery take?',           a: 'Company profiles: 3–5 working days. Static websites: 5–10 days. Dynamic systems and apps are scoped per project.' },
         { q: 'Do you require a deposit?',              a: 'Yes — 50% upfront, 50% on delivery. Full payment is required before final files are handed over.' },
@@ -233,6 +236,7 @@ export const translations = {
       body:      'Bei zote kwa Shilingi ya Tanzania (TZS). Nukuu za mwisho za programu, kadi, na mapendekezo zinategemea upeo — wasiliana nasi kwa makadirio ya haraka.',
       note:      'Maelezo ya kampuni zaidi ya kurasa 30: ongeza TZS 50,000 kwa kila kurasa 10 za ziada. Bei za tovuti na mfumo ni sehemu za kuanzia.',
       ctaButton: 'Omba nukuu',
+      faqEyebrow: 'Maswali',  
       faqHeadline: 'Maswali ya kawaida',
       faqs: [
         { q: 'Utoaji huchukua muda gani?',                a: 'Maelezo ya kampuni: siku 3–5 za kazi. Tovuti za kimya: siku 5–10. Mifumo ya nguvu na programu imepangwa kwa kila mradi.' },
