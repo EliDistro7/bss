@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-   "postinstall": "node scripts/setup-pdf-worker.js"
+    "postinstall": "node scripts/setup-pdf-worker.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -17,12 +17,14 @@
     "pdfjs-dist": "^6.1.200",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.52.1"
+    "react-hook-form": "^7.52.1",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.185.0",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",

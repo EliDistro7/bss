@@ -1,96 +1,16 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useLang } from '../../lib/i18n/LanguageContext'
 import { listPortfolio } from '../../lib/api/portfolio'
-import type { PortfolioItem, PortfolioCategory } from '../../lib/api/portfolio'
-import PortfolioCard from '../../components/PortfolioCard'
-import PortfolioModal from '../../components/PortfolioModal'
-import clsx from 'clsx'
+import type { PortfolioItem } from '../../lib/api/portfolio'
+import PortfolioClientShell from '../../components/PortfolioClientShell'
 
-type Filter = 'all' | PortfolioCategory
+export const revalidate = 60
 
-const FILTERS: Filter[] = ['all', 'profile', 'website', 'app', 'card', 'proposal']
+export default async function PortfolioPage() {
+  let initialItems: PortfolioItem[] = []
+  try {
+    initialItems = await listPortfolio()
+  } catch {
+    // Shell handles error state on client
+  }
 
-export default function PortfolioPage() {
-  const { t, locale } = useLang()
-  const [active, setActive] = useState<Filter>('all')
-  const [selected, setSelected] = useState<string | null>(null)
-  const [items, setItems] = useState<PortfolioItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    setLoading(true)
-    setError('')
-    listPortfolio(active === 'all' ? undefined : active)
-      .then(setItems)
-      .catch(() => setError('Failed to load portfolio.'))
-      .finally(() => setLoading(false))
-  }, [active])
-
-  const selectedItem = items.find(p => p._id === selected)
-
-  return (
-    <>
-      <section className="pt-36 pb-16 border-b border-bss-border">
-        <div className="container-site">
-          <p className="eyebrow">{t.portfolio.eyebrow}</p>
-          <h1 className="display-xl max-w-2xl mb-6">{t.portfolio.headline}</h1>
-          <p className="body-lead">{t.portfolio.body}</p>
-        </div>
-      </section>
-
-      <section className="border-b border-bss-border sticky top-[72px] bg-bss-black z-30">
-        <div className="container-site">
-          <div className="flex gap-8 overflow-x-auto">
-            {FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActive(f)}
-                className={clsx('tab-btn', active === f && 'active')}
-              >
-                {t.portfolio.filters[f]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section-pad">
-        <div className="container-site">
-          {loading && (
-            <p className="text-2xs tracking-widest uppercase text-bss-muted animate-pulse">
-              Loading…
-            </p>
-          )}
-
-          {error && (
-            <p className="text-sm text-red-400" role="alert">{error}</p>
-          )}
-
-          {!loading && !error && items.length === 0 && (
-            <p className="body-base text-bss-muted">No items found.</p>
-          )}
-
-          {!loading && !error && items.length > 0 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-bss-border">
-              {items.map((item) => (
-                <PortfolioCard
-                  key={item._id}
-                  item={item}
-                  title={locale === 'sw' ? item.titleSw : item.title}
-                  onClick={() => setSelected(item._id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {selectedItem && (
-        <PortfolioModal item={selectedItem} onClose={() => setSelected(null)} />
-      )}
-    </>
-  )
+  return <PortfolioClientShell initialItems={initialItems} />
 }

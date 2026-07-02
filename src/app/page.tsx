@@ -11,6 +11,7 @@ import PortfolioModal from '../components/PortfolioModal'
 import TeamSection from '../components/TeamSection'
 import ServicesCarousel from '../components/ServicesCarousel'
 
+
 interface Stat {
   value: string
   labelKey: 'statsLabel1' | 'statsLabel2' | 'statsLabel3'
@@ -138,6 +139,8 @@ export default function HomePage() {
 
       {/* ── Portfolio teaser ─────────────────────────────────────────────── */}
       <PortfolioTeaser />
+
+   
 
       {/* ── Services carousel ────────────────────────────────────────────── */}
       <ServicesCarousel />
