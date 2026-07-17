@@ -10,6 +10,7 @@ import PortfolioCard from '../components/PortfolioCard'
 import PortfolioModal from '../components/PortfolioModal'
 import TeamSection from '../components/TeamSection'
 import ServicesCarousel from '../components/ServicesCarousel'
+import MobileShowcase from '../components/MobileShowcase';
 
 
 interface Stat {
@@ -122,20 +123,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
-      <section className="border-t border-bss-border">
-        <div className="container-site">
-          <div className="grid grid-cols-3 divide-x divide-bss-border">
-            {STATS.map(({ value, labelKey }) => (
-              <div key={labelKey} className="py-10 md:py-14 px-6 md:px-10 first:pl-0 last:pr-0">
-                <p className="font-display text-4xl md:text-5xl font-bold text-bss-white mb-1">{value}</p>
-                <p className="text-xs tracking-wider uppercase font-body font-medium text-bss-muted">
-                  {t.home[labelKey]}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+  
 
       {/* ── Portfolio teaser ─────────────────────────────────────────────── */}
       <PortfolioTeaser />
@@ -143,7 +131,7 @@ export default function HomePage() {
    
 
       {/* ── Services carousel ────────────────────────────────────────────── */}
-      <ServicesCarousel />
+      <MobileShowcase />
 
       {/* ── Why BSS ──────────────────────────────────────────────────────── */}
       <section className="border-t border-bss-border overflow-hidden">
