@@ -12,6 +12,14 @@ interface AppCard {
 }
 
 const APPS: AppCard[] = [
+    {
+    id: 'bizlink',
+    name: 'BizLink',
+    tagline: 'Multi-branch accounting',
+    videoSrc: '/videos/bizlink.mp4',
+    accent: '#10B981',  // emerald — finance/growth
+    offset: '-translate-y-8',
+  },
   {
     id: 'events',
     name: 'Events',
@@ -20,14 +28,7 @@ const APPS: AppCard[] = [
     accent: '#6C63FF',  // indigo — for events/ticketing feel
     offset: 'translate-y-0',
   },
-  {
-    id: 'bizlink',
-    name: 'BizLink',
-    tagline: 'Multi-branch accounting',
-    videoSrc: '/videos/bizlink.mp4',
-    accent: '#10B981',  // emerald — finance/growth
-    offset: '-translate-y-8',
-  },
+
   {
     id: 'manereja',
     name: 'Manereja',
