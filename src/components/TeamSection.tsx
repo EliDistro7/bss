@@ -9,9 +9,14 @@ const TEAM = [
     role: 'Founder & Lead Developer',
     img: '/team/bari.png',
   },
+   {
+    name: 'Naomi Shadrack',
+    role: 'Secretary',
+    img: '/team/Nasha.jpeg',
+  },
   {
     name: 'Merryness Melchiory',
-    role: 'Secretary',
+    role: 'Marketing Officer',
     img: '/team/merry.png',
   },
   {
