@@ -1,592 +1,608 @@
-"use client";
+'use client';
+import { useState, useRef } from 'react';
 
-import { useState, useCallback } from "react";
+// ── Constants ─────────────────────────────────────────────────────────────────
+const API_BASE = process.env.NEXT_PUBLIC_YT_TRIM_API_URL || 'https://yt-trimmer-21vn.onrender.com';
 
-// ─── types ───────────────────────────────────────────────────────────────────
-
-type Step = "input" | "price" | "processing" | "done" | "error";
-
-interface PriceResult {
-  durationSecs: number;
-  price: number;          // USD cents
-  displayPrice: string;   // e.g. "$0.30"
-  label: string;          // e.g. "10s clip"
-}
-
-interface GenerateResult {
-  fileId: string;
-  filename: string;
-}
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-function toSeconds(t: string): number | null {
-  const trimmed = t.trim();
-  if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10);
-  const parts = trimmed.split(":").map(Number);
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function toSeconds(str: string | null | undefined): number | null {
+  if (!str) return null;
+  str = str.trim();
+  if (/^\d+$/.test(str)) return parseInt(str, 10);
+  const parts = str.split(':').map(Number);
   if (parts.some(isNaN)) return null;
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   return null;
 }
 
-function formatTime(secs: number): string {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
+function formatDuration(seconds: number | null): string {
+  if (!seconds || seconds <= 0) return '—';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
 
-// ─── component ───────────────────────────────────────────────────────────────
+function extractVideoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    return u.searchParams.get('v');
+  } catch {
+    return null;
+  }
+}
 
-export default function ClipPage() {
-  const [url, setUrl]       = useState("");
-  const [start, setStart]   = useState("");
-  const [end, setEnd]       = useState("");
-  const [step, setStep]     = useState<Step>("input");
-  const [price, setPrice]   = useState<PriceResult | null>(null);
-  const [result, setResult] = useState<GenerateResult | null>(null);
-  const [error, setError]   = useState("");
+// ── BSS design tokens (inline — no Tailwind needed for tool components) ───────
+const T = {
+  black:    '#000000',
+  surface:  '#0c0c0c',
+  card:     '#141414',
+  border:   '#222222',
+  muted:    '#555555',
+  subtle:   '#888888',
+  offwhite: '#e8e8e8',
+  white:    '#ffffff',
+  display:  '"Playfair Display", Georgia, serif',
+  body:     '"Inter", system-ui, sans-serif',
+} as const;
 
-  // ── validation ─────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-  const startSecs = toSeconds(start);
-  const endSecs   = toSeconds(end);
-  const isValid =
-    url.trim().length > 0 &&
-    startSecs !== null &&
-    endSecs !== null &&
-    endSecs > (startSecs ?? 0);
+function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <label style={{
+        display: 'block',
+        fontSize: 10, fontWeight: 500, fontFamily: T.body,
+        color: T.muted, letterSpacing: '0.16em', textTransform: 'uppercase',
+      }}>
+        {children}
+      </label>
+      {hint && (
+        <p style={{ fontSize: 11, color: T.subtle, marginTop: 3, fontFamily: T.body, fontWeight: 300 }}>
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
 
-  // ── step 1: get price ──────────────────────────────────────────────────────
+function BSSInput({
+  value, onChange, placeholder, error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <input
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={{
+        width: '100%', boxSizing: 'border-box',
+        padding: '10px 14px',
+        fontSize: 13, fontFamily: T.body, fontWeight: 300,
+        color: T.offwhite,
+        background: T.black,
+        border: `1px solid ${error ? '#555' : focused ? T.offwhite : T.border}`,
+        borderRadius: 0, outline: 'none',
+        transition: 'border-color 0.15s',
+      }}
+    />
+  );
+}
 
-  const handleGetPrice = useCallback(async () => {
-    if (!isValid) return;
-    setError("");
-    setStep("price");
+type Status = 'idle' | 'preparing' | 'downloading' | 'done' | 'error';
 
-    try {
-      const res = await fetch("/api/clip/price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start, end }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to calculate price");
-      setPrice(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      setStep("error");
-    }
-  }, [isValid, start, end]);
-
-  // ── step 2: pay + generate ─────────────────────────────────────────────────
-
-  const handleGenerate = useCallback(async () => {
-    if (!price) return;
-    setStep("processing");
-    setError("");
-
-    try {
-      const res = await fetch("/api/clip/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, start, end }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Generation failed");
-      setResult(data);
-      setStep("done");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      setStep("error");
-    }
-  }, [price, url, start, end]);
-
-  // ── reset ──────────────────────────────────────────────────────────────────
-
-  const reset = () => {
-    setUrl(""); setStart(""); setEnd("");
-    setStep("input"); setPrice(null); setResult(null); setError("");
+function StatusPill({ status }: { status: Status }) {
+  const map: Record<Status, { label: string; color: string }> = {
+    idle:        { label: 'Ready',     color: T.muted    },
+    preparing:   { label: 'Preparing', color: T.subtle   },
+    downloading: { label: 'Trimming',  color: T.offwhite },
+    done:        { label: 'Complete',  color: T.white     },
+    error:       { label: 'Failed',    color: T.subtle   },
   };
+  const s = map[status];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '3px 0',
+      fontSize: 10, fontFamily: T.body, fontWeight: 500,
+      letterSpacing: '0.14em', textTransform: 'uppercase',
+      color: s.color,
+    }}>
+      {status === 'downloading' && (
+        <span style={{
+          width: 5, height: 5, borderRadius: '50%', background: T.white,
+          animation: 'bss-pulse 1.4s ease-in-out infinite',
+        }} />
+      )}
+      {status === 'done' && (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+          stroke={T.white} strokeWidth="2.5" strokeLinecap="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      )}
+      {s.label}
+    </span>
+  );
+}
 
-  // ── render ─────────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
+export default function YTTrimPage() {
+  const [url,      setUrl]      = useState('');
+  const [start,    setStart]    = useState('');
+  const [end,      setEnd]      = useState('');
+  const [endMode,  setEndMode]  = useState<'endtime' | 'duration'>('endtime');
+  const [filename, setFilename] = useState('');
+  const [status,   setStatus]   = useState<Status>('idle');
+  const [error,    setError]    = useState('');
+  const [progress, setProgress] = useState(0);
+  const [errors,   setErrors]   = useState<Record<string, string>>({});
+  const abortRef = useRef<AbortController | null>(null);
+
+  const videoId  = extractVideoId(url);
+  const startSec = toSeconds(start);
+  const endSec   = toSeconds(end);
+  const duration =
+    startSec != null && endSec != null && endMode === 'endtime' ? endSec - startSec
+    : endSec != null && endMode === 'duration' ? endSec
+    : null;
+
+  function validate(): boolean {
+    const e: Record<string, string> = {};
+    if (!url.trim())        e.url   = 'Paste a YouTube URL.';
+    else if (!videoId)      e.url   = "Doesn't look like a valid YouTube URL.";
+    if (!start.trim())      e.start = 'Enter a start time.';
+    else if (startSec == null) e.start = 'Use HH:MM:SS or plain seconds.';
+    if (!end.trim())        e.end   = 'Enter an end time or duration.';
+    else if (endSec == null) e.end  = 'Use HH:MM:SS or plain seconds.';
+    if (!e.start && !e.end) {
+      if (endMode === 'endtime'  && endSec! <= startSec!) e.end = 'End must be after start.';
+      if (endMode === 'duration' && endSec! <= 0)         e.end = 'Duration must be greater than 0.';
+      if (duration! > 3600) e.end = 'Clips cannot exceed 1 hour.';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  async function handleTrim() {
+    if (!validate()) return;
+    setError('');
+    setStatus('preparing');
+    setProgress(0);
+
+    const body = {
+      url:      url.trim(),
+      start:    start.trim(),
+      end:      end.trim(),
+      end_mode: endMode,
+      ...(filename.trim() && {
+        filename: filename.trim().endsWith('.mp4')
+          ? filename.trim()
+          : `${filename.trim()}.mp4`,
+      }),
+    };
+
+    try {
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const res = await fetch(`${API_BASE}/clip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).detail || `Server error ${res.status}`);
+      }
+
+      setStatus('downloading');
+
+      const reader = res.body!.getReader();
+      const chunks: Uint8Array<ArrayBuffer>[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(new Uint8Array(value.buffer as ArrayBuffer, value.byteOffset, value.byteLength));
+        received += value.length;
+        setProgress(received);
+      }
+
+      const cd    = res.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="?([^"]+)"?/);
+      const fname = match?.[1] || (body as any).filename || 'clip.mp4';
+
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const link = document.createElement('a');
+      link.href     = URL.createObjectURL(blob);
+      link.download = fname;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      setStatus('done');
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setStatus('idle');
+      } else {
+        setError(err.message || 'Something went wrong.');
+        setStatus('error');
+      }
+    }
+  }
+
+  function handleCancel() { abortRef.current?.abort(); setStatus('idle'); setProgress(0); }
+  function handleReset()  { setStatus('idle'); setError(''); setProgress(0); setErrors({}); }
+
+  const busy = status === 'preparing' || status === 'downloading';
 
   return (
-    <main className="clip-root">
+    <>
+      {/* keyframe injected once */}
+      <style>{`
+        @keyframes bss-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        @keyframes bss-bar   { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+        .bss-trim-input::placeholder { color: ${T.muted}; }
+      `}</style>
 
-      {/* ── page header ── */}
-      <header className="clip-header">
-        <span className="clip-eyebrow">Video tool</span>
-        <h1 className="clip-title">Clip a YouTube segment</h1>
-        <p className="clip-subtitle">
-          Paste a video URL, set your in/out points, pay per second of clip — download in seconds.
+      {/* ── Page header ────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 40 }}>
+        <p style={{
+          fontFamily: T.body, fontSize: 10, fontWeight: 500,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: T.muted, marginBottom: 12,
+        }}>
+          Tools
         </p>
-      </header>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+          <h1 style={{
+            fontFamily: T.display, fontWeight: 700, fontSize: 'clamp(2rem, 4vw, 3rem)',
+            color: T.white, lineHeight: 1.05, letterSpacing: '-0.025em', margin: 0,
+          }}>
+            Clip Trimmer
+          </h1>
+          <StatusPill status={status} />
+        </div>
+        <p style={{
+          fontFamily: T.body, fontWeight: 300, fontSize: '0.9375rem',
+          color: T.subtle, lineHeight: 1.7, marginTop: 12, maxWidth: '52ch',
+        }}>
+          Paste a YouTube link, set your clip window, and download an MP4 — nothing stored on the server.
+        </p>
+        <div style={{ marginTop: 20, height: 1, background: T.border }} />
+      </div>
 
-      {/* ── card ── */}
-      <section className="clip-card">
+      {/* ── Form ───────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gap: 28, maxWidth: 680 }}>
 
-        {/* INPUT */}
-        {(step === "input" || step === "error") && (
-          <div className="clip-form">
-            <div className="clip-field">
-              <label className="clip-label">YouTube URL</label>
-              <input
-                className="clip-input"
-                type="url"
-                placeholder="https://youtu.be/…"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
+        {/* Video URL */}
+        <div>
+          <FieldLabel hint="Any youtube.com or youtu.be link">Video URL</FieldLabel>
+          <BSSInput
+            value={url}
+            onChange={v => { setUrl(v); setErrors(e => ({ ...e, url: '' })); }}
+            placeholder="https://www.youtube.com/watch?v=…"
+            error={errors.url}
+          />
+          {errors.url && (
+            <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
+              {errors.url}
+            </p>
+          )}
+
+          {/* Thumbnail preview */}
+          {videoId && (
+            <div style={{
+              marginTop: 12, position: 'relative', overflow: 'hidden',
+              border: `1px solid ${T.border}`, aspectRatio: '16/5', maxHeight: 110,
+              background: T.black,
+            }}>
+              <img
+                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                alt="Video thumbnail"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55, display: 'block' }}
               />
-            </div>
-
-            <div className="clip-row">
-              <div className="clip-field">
-                <label className="clip-label">Start time</label>
-                <input
-                  className="clip-input clip-input--mono"
-                  type="text"
-                  placeholder="1:36:00"
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                />
-              </div>
-              <div className="clip-divider-arrow">→</div>
-              <div className="clip-field">
-                <label className="clip-label">End time</label>
-                <input
-                  className="clip-input clip-input--mono"
-                  type="text"
-                  placeholder="1:36:30"
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                />
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', padding: '0 20px',
+              }}>
+                <p style={{
+                  color: T.white, fontSize: 12, fontFamily: T.body,
+                  fontWeight: 400, margin: 0, letterSpacing: '0.04em',
+                }}>
+                  Video found — set your clip times below
+                </p>
               </div>
             </div>
+          )}
+        </div>
 
-            {/* inline duration preview */}
-            {startSecs !== null && endSecs !== null && endSecs > startSecs && (
-              <p className="clip-hint">
-                Clip length: <strong>{endSecs - startSecs}s</strong>
-                &nbsp;·&nbsp;{formatTime(startSecs)} → {formatTime(endSecs)}
+        {/* Timing row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div>
+            <FieldLabel hint="HH:MM:SS or plain seconds">Start time</FieldLabel>
+            <BSSInput
+              value={start}
+              onChange={v => { setStart(v); setErrors(e => ({ ...e, start: '' })); }}
+              placeholder="0:30 or 30"
+              error={errors.start}
+            />
+            {errors.start && (
+              <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
+                {errors.start}
               </p>
             )}
-
-            {step === "error" && (
-              <p className="clip-error">{error}</p>
+          </div>
+          <div>
+            <FieldLabel hint={endMode === 'duration' ? 'Seconds to clip' : 'HH:MM:SS or plain seconds'}>
+              {endMode === 'duration' ? 'Duration' : 'End time'}
+            </FieldLabel>
+            <BSSInput
+              value={end}
+              onChange={v => { setEnd(v); setErrors(e => ({ ...e, end: '' })); }}
+              placeholder={endMode === 'duration' ? '60' : '1:30 or 90'}
+              error={errors.end}
+            />
+            {errors.end && (
+              <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
+                {errors.end}
+              </p>
             )}
-
-            <button
-              className="clip-btn clip-btn--primary"
-              disabled={!isValid}
-              onClick={handleGetPrice}
-            >
-              Check price
-            </button>
           </div>
-        )}
+        </div>
 
-        {/* PRICE PREVIEW — skeleton while loading */}
-        {step === "price" && !price && (
-          <div className="clip-loading">
-            <div className="clip-spinner" />
-            <span>Calculating…</span>
+        {/* End mode toggle + duration preview */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex', border: `1px solid ${T.border}`,
+          }}>
+            {(['endtime', 'duration'] as const).map(val => (
+              <button
+                key={val}
+                onClick={() => { setEndMode(val); setErrors(e => ({ ...e, end: '' })); }}
+                style={{
+                  padding: '7px 18px',
+                  fontSize: 10, fontFamily: T.body, fontWeight: 500,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  border: 'none', cursor: 'pointer',
+                  background: endMode === val ? T.white : 'transparent',
+                  color: endMode === val ? T.black : T.muted,
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {val === 'endtime' ? 'End time' : 'Duration'}
+              </button>
+            ))}
           </div>
-        )}
 
-        {/* PRICE CONFIRM */}
-        {step === "price" && price && (
-          <div className="clip-price-confirm">
-            <div className="clip-price-badge">
-              <span className="clip-price-amount">{price.displayPrice}</span>
-              <span className="clip-price-label">{price.label}</span>
-            </div>
+          {duration != null && duration > 0 && (
+            <span style={{
+              fontSize: 11, fontFamily: T.body, fontWeight: 400, color: T.subtle,
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                stroke={T.subtle} strokeWidth="1.5" strokeLinecap="round">
+                <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+              </svg>
+              {formatDuration(duration)} clip
+              {duration > 3600 && (
+                <span style={{ color: T.muted }}> — exceeds 1 hour limit</span>
+              )}
+            </span>
+          )}
+        </div>
 
-            <p className="clip-price-breakdown">
-              {price.durationSecs}s × $0.03/s
-            </p>
+        {/* Optional filename */}
+        <div>
+          <FieldLabel hint="Optional — defaults to clip.mp4">Save as</FieldLabel>
+          <BSSInput value={filename} onChange={setFilename} placeholder="my-clip" />
+        </div>
 
-            {/* payment note — replace with real Stripe element */}
-            <div className="clip-payment-placeholder">
-              <span className="clip-payment-icon">💳</span>
-              <span className="clip-payment-text">
-                Payment via Stripe (integrate here)
+        {/* Progress / preparing indicators */}
+        {status === 'downloading' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontFamily: T.body, color: T.subtle, fontWeight: 400 }}>
+                Streaming clip…
+              </span>
+              <span style={{ fontSize: 11, fontFamily: T.body, color: T.muted, fontWeight: 300 }}>
+                {(progress / 1024 / 1024).toFixed(1)} MB received
               </span>
             </div>
-
-            <div className="clip-price-actions">
-              <button className="clip-btn clip-btn--ghost" onClick={reset}>
-                ← Back
-              </button>
-              <button
-                className="clip-btn clip-btn--primary"
-                onClick={handleGenerate}
-              >
-                Pay &amp; generate clip
-              </button>
+            <div style={{ height: 1, background: T.border, overflow: 'hidden', position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: T.white,
+                animation: 'bss-bar 1.6s ease-in-out infinite',
+              }} />
             </div>
           </div>
         )}
 
-        {/* PROCESSING */}
-        {step === "processing" && (
-          <div className="clip-loading">
-            <div className="clip-spinner" />
-            <span>Downloading and trimming your clip…</span>
-            <p className="clip-loading-sub">
-              This usually takes 10–30 seconds depending on clip length.
+        {status === 'preparing' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%', background: T.white,
+              animation: 'bss-pulse 1.2s ease-in-out infinite',
+            }} />
+            <span style={{ fontSize: 11, fontFamily: T.body, color: T.subtle, fontWeight: 400 }}>
+              Contacting server…
+            </span>
+          </div>
+        )}
+
+        {/* Success */}
+        {status === 'done' && (
+          <div style={{
+            padding: '14px 16px', border: `1px solid ${T.border}`,
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke={T.white} strokeWidth="2" strokeLinecap="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            <p style={{ fontSize: 13, color: T.offwhite, fontFamily: T.body, fontWeight: 300, margin: 0 }}>
+              Clip downloaded — check your downloads folder.
             </p>
           </div>
         )}
 
-        {/* DONE */}
-        {step === "done" && result && (
-          <div className="clip-done">
-            <div className="clip-done-icon">✓</div>
-            <h2 className="clip-done-title">Clip ready</h2>
-            <p className="clip-done-file">{result.filename}</p>
-            <a
-              className="clip-btn clip-btn--primary"
-              href={`/api/clip/download/${result.fileId}`}
-              download={result.filename}
-            >
-              Download MP4
-            </a>
-            <button className="clip-btn clip-btn--ghost" onClick={reset}>
-              Trim another
-            </button>
+        {/* Error */}
+        {status === 'error' && error && (
+          <div style={{
+            padding: '14px 16px', border: `1px solid ${T.border}`,
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke={T.subtle} strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <p style={{ fontSize: 13, color: T.subtle, fontFamily: T.body, fontWeight: 300, margin: 0 }}>
+              {error}
+            </p>
           </div>
         )}
 
-      </section>
+        {/* ── Actions ── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          paddingTop: 8, borderTop: `1px solid ${T.border}`,
+        }}>
+          {!busy && status !== 'done' && (
+            <button
+              onClick={handleTrim}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 28px',
+                background: T.white, color: T.black,
+                fontFamily: T.body, fontSize: 13, fontWeight: 500, letterSpacing: '0.04em',
+                border: 'none', cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = T.offwhite)}
+              onMouseLeave={e => (e.currentTarget.style.background = T.white)}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Trim &amp; Download
+            </button>
+          )}
 
-      {/* ── pricing table ── */}
-      <section className="clip-pricing">
-        <h2 className="clip-pricing-title">Simple per-second pricing</h2>
-        <div className="clip-pricing-grid">
-          {[
-            { range: "1 – 30 s",   price: "$0.03 / s", eg: "10s = $0.30" },
-            { range: "31 – 120 s", price: "$0.02 / s", eg: "60s = $1.20" },
-            { range: "121 s +",    price: "$0.015 / s", eg: "5 min = $4.50" },
-          ].map((tier) => (
-            <div key={tier.range} className="clip-tier">
-              <span className="clip-tier-range">{tier.range}</span>
-              <span className="clip-tier-price">{tier.price}</span>
-              <span className="clip-tier-eg">{tier.eg}</span>
-            </div>
-          ))}
+          {busy && (
+            <button
+              onClick={handleCancel}
+              style={{
+                padding: '12px 24px',
+                background: 'transparent', color: T.muted,
+                fontFamily: T.body, fontSize: 13, fontWeight: 400,
+                border: `1px solid ${T.border}`, cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          )}
+
+          {status === 'done' && (
+            <button
+              onClick={handleReset}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 28px',
+                background: T.white, color: T.black,
+                fontFamily: T.body, fontSize: 13, fontWeight: 500, letterSpacing: '0.04em',
+                border: 'none', cursor: 'pointer',
+              }}
+            >
+              Trim another clip
+            </button>
+          )}
+
+          {status === 'error' && (
+            <button
+              onClick={handleReset}
+              style={{
+                padding: '12px 24px',
+                background: 'transparent', color: T.muted,
+                fontFamily: T.body, fontSize: 13, fontWeight: 400,
+                border: `1px solid ${T.border}`, cursor: 'pointer',
+              }}
+            >
+              Try again
+            </button>
+          )}
+
+          <a
+            href={`${API_BASE}/health`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              marginLeft: 'auto',
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              fontSize: 10, fontFamily: T.body, fontWeight: 400,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: T.muted, textDecoration: 'none',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = T.subtle)}
+            onMouseLeave={e => (e.currentTarget.style.color = T.muted)}
+          >
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+            </svg>
+            Server status
+          </a>
         </div>
-      </section>
 
-      {/* ── scoped styles (BSS token system) ── */}
-      <style>{`
-        .clip-root {
-          min-height: 100vh;
-          background: var(--color-canvas, #F9F7F4);
-          font-family: var(--font-sans, "DM Sans", sans-serif);
-          padding: 0 1rem 4rem;
-        }
+        {/* ── How it works ── */}
+        <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 28 }}>
+          <p style={{
+            fontFamily: T.body, fontSize: 10, fontWeight: 500,
+            letterSpacing: '0.16em', textTransform: 'uppercase', color: T.muted, marginBottom: 20,
+          }}>
+            How it works
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24 }}>
+            {([
+              ['Paste URL',  'Any youtube.com or youtu.be link works.'],
+              ['Set times',  'Use HH:MM:SS, M:SS, or plain seconds like 90.'],
+              ['Download',   'The clip streams directly to you — nothing stored on the server.'],
+            ] as const).map(([title, desc]) => (
+              <div key={title}>
+                <p style={{
+                  fontFamily: T.display, fontSize: '1rem', fontWeight: 700,
+                  color: T.white, margin: '0 0 6px',
+                }}>
+                  {title}
+                </p>
+                <p style={{
+                  fontFamily: T.body, fontSize: 12, fontWeight: 300,
+                  color: T.subtle, margin: 0, lineHeight: 1.7,
+                }}>
+                  {desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        /* header */
-        .clip-header {
-          max-width: 560px;
-          margin: 0 auto;
-          padding: 4rem 0 2.5rem;
-          text-align: center;
-        }
-        .clip-eyebrow {
-          display: inline-block;
-          font-family: var(--font-label, "Barlow Condensed", sans-serif);
-          font-size: 0.7rem;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--color-accent-500, #1E9F91);
-          margin-bottom: 0.75rem;
-        }
-        .clip-title {
-          font-family: var(--font-display, "Playfair Display", serif);
-          font-size: clamp(2rem, 5vw, 3rem);
-          font-weight: 600;
-          color: var(--color-ink-900, #131210);
-          margin: 0 0 0.75rem;
-          line-height: 1.15;
-        }
-        .clip-subtitle {
-          font-size: 1rem;
-          color: var(--color-ink-500, #6B6760);
-          line-height: 1.6;
-          max-width: 440px;
-          margin: 0 auto;
-        }
-
-        /* card */
-        .clip-card {
-          max-width: 520px;
-          margin: 0 auto 2.5rem;
-          background: var(--color-surface, #fff);
-          border: 1px solid var(--color-border, #E2DFD9);
-          border-radius: var(--radius-xl, 16px);
-          box-shadow: var(--shadow-md, 0 4px 16px rgba(19,18,16,.10));
-          padding: 2rem;
-        }
-
-        /* form */
-        .clip-form { display: flex; flex-direction: column; gap: 1.25rem; }
-        .clip-field { display: flex; flex-direction: column; gap: 0.4rem; }
-        .clip-label {
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: var(--color-ink-600, #514E48);
-          letter-spacing: 0.02em;
-        }
-        .clip-input {
-          width: 100%;
-          padding: 0.625rem 0.875rem;
-          font-family: var(--font-sans, sans-serif);
-          font-size: 0.9375rem;
-          color: var(--color-ink-900, #131210);
-          background: var(--color-canvas, #F9F7F4);
-          border: 1px solid var(--color-border, #E2DFD9);
-          border-radius: var(--radius-md, 8px);
-          outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s;
-          box-sizing: border-box;
-        }
-        .clip-input:focus {
-          border-color: var(--color-accent-500, #1E9F91);
-          box-shadow: 0 0 0 3px var(--color-accent-100, rgba(30,159,145,.12));
-        }
-        .clip-input--mono {
-          font-family: var(--font-mono, "JetBrains Mono", monospace);
-          font-size: 0.875rem;
-          letter-spacing: 0.04em;
-        }
-        .clip-row {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          align-items: end;
-          gap: 0.5rem;
-        }
-        .clip-divider-arrow {
-          padding-bottom: 0.625rem;
-          color: var(--color-ink-400, #8E8A82);
-          font-size: 1rem;
-        }
-        .clip-hint {
-          font-size: 0.8125rem;
-          color: var(--color-ink-500, #6B6760);
-          margin: -0.25rem 0 0;
-        }
-        .clip-hint strong { color: var(--color-ink-800, #252320); }
-        .clip-error {
-          font-size: 0.875rem;
-          color: var(--color-danger, #D94F4F);
-          background: rgba(217,79,79,.07);
-          padding: 0.625rem 0.875rem;
-          border-radius: var(--radius-md, 8px);
-          margin: 0;
-        }
-
-        /* buttons */
-        .clip-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          padding: 0.6875rem 1.5rem;
-          font-family: var(--font-sans, sans-serif);
-          font-size: 0.9375rem;
-          font-weight: 500;
-          border-radius: var(--radius-md, 8px);
-          cursor: pointer;
-          border: none;
-          transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
-          text-decoration: none;
-        }
-        .clip-btn--primary {
-          background: var(--color-accent-500, #1E9F91);
-          color: #fff;
-          box-shadow: var(--shadow-sm);
-        }
-        .clip-btn--primary:hover { background: var(--color-accent-600, #197F75); }
-        .clip-btn--primary:disabled { opacity: 0.45; cursor: not-allowed; }
-        .clip-btn--ghost {
-          background: transparent;
-          color: var(--color-ink-600, #514E48);
-          border: 1px solid var(--color-border, #E2DFD9);
-        }
-        .clip-btn--ghost:hover { background: var(--color-overlay, #F2EFE9); }
-
-        /* loading */
-        .clip-loading {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          padding: 2.5rem 1rem;
-          color: var(--color-ink-600, #514E48);
-          font-size: 0.9375rem;
-        }
-        .clip-loading-sub {
-          font-size: 0.8125rem;
-          color: var(--color-ink-400, #8E8A82);
-          text-align: center;
-          margin: 0;
-        }
-        .clip-spinner {
-          width: 32px;
-          height: 32px;
-          border: 2.5px solid var(--color-border, #E2DFD9);
-          border-top-color: var(--color-accent-500, #1E9F91);
-          border-radius: 50%;
-          animation: spin 0.75s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* price confirm */
-        .clip-price-confirm {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1.25rem;
-          text-align: center;
-        }
-        .clip-price-badge {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 1.5rem 2.5rem;
-          background: var(--color-accent-100, rgba(30,159,145,.12));
-          border-radius: var(--radius-lg, 12px);
-        }
-        .clip-price-amount {
-          font-family: var(--font-display, "Playfair Display", serif);
-          font-size: 2.5rem;
-          font-weight: 600;
-          color: var(--color-accent-600, #197F75);
-          line-height: 1;
-        }
-        .clip-price-label {
-          font-size: 0.8125rem;
-          color: var(--color-ink-500, #6B6760);
-        }
-        .clip-price-breakdown {
-          font-size: 0.8125rem;
-          color: var(--color-ink-400, #8E8A82);
-          margin: 0;
-        }
-        .clip-payment-placeholder {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.25rem;
-          background: var(--color-overlay, #F2EFE9);
-          border: 1px dashed var(--color-border, #E2DFD9);
-          border-radius: var(--radius-md, 8px);
-          font-size: 0.875rem;
-          color: var(--color-ink-500, #6B6760);
-          width: 100%;
-        }
-        .clip-payment-icon { font-size: 1rem; }
-        .clip-price-actions {
-          display: flex;
-          gap: 0.75rem;
-          width: 100%;
-        }
-        .clip-price-actions .clip-btn { flex: 1; }
-
-        /* done */
-        .clip-done {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          padding: 1.5rem 0;
-          text-align: center;
-        }
-        .clip-done-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: var(--color-success, #2E9B6A);
-          color: #fff;
-          font-size: 1.25rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .clip-done-title {
-          font-family: var(--font-display, "Playfair Display", serif);
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: var(--color-ink-900, #131210);
-          margin: 0;
-        }
-        .clip-done-file {
-          font-family: var(--font-mono, monospace);
-          font-size: 0.8125rem;
-          color: var(--color-ink-500, #6B6760);
-          margin: 0;
-        }
-        .clip-done .clip-btn { width: 100%; }
-
-        /* pricing table */
-        .clip-pricing {
-          max-width: 520px;
-          margin: 0 auto;
-        }
-        .clip-pricing-title {
-          font-family: var(--font-display, "Playfair Display", serif);
-          font-size: 1.125rem;
-          font-weight: 500;
-          color: var(--color-ink-700, #3A3830);
-          margin: 0 0 1rem;
-          text-align: center;
-        }
-        .clip-pricing-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 0.75rem;
-        }
-        .clip-tier {
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-          padding: 1rem;
-          background: var(--color-surface, #fff);
-          border: 1px solid var(--color-border, #E2DFD9);
-          border-radius: var(--radius-lg, 12px);
-          text-align: center;
-        }
-        .clip-tier-range {
-          font-size: 0.6875rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          color: var(--color-ink-400, #8E8A82);
-        }
-        .clip-tier-price {
-          font-family: var(--font-display, "Playfair Display", serif);
-          font-size: 1rem;
-          font-weight: 600;
-          color: var(--color-accent-600, #197F75);
-        }
-        .clip-tier-eg {
-          font-size: 0.75rem;
-          color: var(--color-ink-400, #8E8A82);
-        }
-
-        @media (max-width: 520px) {
-          .clip-card { padding: 1.5rem 1.25rem; }
-          .clip-pricing-grid { grid-template-columns: 1fr; }
-          .clip-price-actions { flex-direction: column; }
-        }
-      `}</style>
-    </main>
+      </div>
+    </>
   );
 }
