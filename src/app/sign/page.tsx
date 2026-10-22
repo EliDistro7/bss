@@ -2,21 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// ── BSS tokens ────────────────────────────────────────────────────────────────
-const T = {
-  black:    '#000000',
-  surface:  '#0c0c0c',
-  card:     '#141414',
-  border:   '#222222',
-  muted:    '#555555',
-  subtle:   '#888888',
-  offwhite: '#e8e8e8',
-  white:    '#ffffff',
-  blue:     '#3b82f6',
-  display:  '"Playfair Display", Georgia, serif',
-  body:     '"Inter", system-ui, sans-serif',
-} as const;
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface SignatureState {
   dataUrl: string;
@@ -47,38 +32,22 @@ const INK_SWATCHES = [
 const SAVED_SIG_KEY = 'bss_saved_signature';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function eyebrow(label: string) {
-  return (
-    <p style={{
-      fontFamily: T.body, fontSize: 10, fontWeight: 500,
-      letterSpacing: '0.18em', textTransform: 'uppercase',
-      color: T.muted, margin: '0 0 12px',
-    }}>
-      {label}
-    </p>
-  );
-}
-
 function Toggle({
   checked, onChange, label,
 }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+    <label className="flex items-center gap-2.5 cursor-pointer">
       <div
         onClick={() => onChange(!checked)}
-        style={{
-          width: 36, height: 20, borderRadius: 10, position: 'relative',
-          background: checked ? T.subtle : T.border,
-          transition: 'background 0.2s', flexShrink: 0,
-        }}
+        className="relative w-9 h-5 rounded-full flex-shrink-0 transition-colors duration-200"
+        style={{ background: checked ? '#888888' : '#222222' }}
       >
-        <div style={{
-          position: 'absolute', top: 3, left: checked ? 19 : 3,
-          width: 14, height: 14, borderRadius: '50%',
-          background: T.white, transition: 'left 0.2s',
-        }} />
+        <div
+          className="absolute top-[3px] w-3.5 h-3.5 rounded-full bg-bss-white transition-all duration-200"
+          style={{ left: checked ? 19 : 3 }}
+        />
       </div>
-      <span style={{ fontFamily: T.body, fontSize: 12, color: T.subtle }}>{label}</span>
+      <span className="font-body text-xs text-bss-subtle">{label}</span>
     </label>
   );
 }
@@ -92,26 +61,26 @@ function Btn({
   disabled?: boolean;
   small?: boolean;
 }) {
-  const [hov, setHov] = useState(false);
-  const pad = small ? '7px 14px' : '11px 28px';
+  if (ghost) {
+    return (
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`inline-flex items-center gap-1.5 border border-bss-border text-bss-subtle font-body font-medium tracking-wide transition-all duration-150
+          hover:border-bss-white hover:text-bss-white disabled:opacity-50 disabled:cursor-not-allowed
+          ${small ? 'px-3.5 py-1.5 text-[11px]' : 'px-7 py-2.5 text-[13px]'}`}
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 7,
-        padding: pad,
-        background: ghost ? 'transparent' : disabled ? T.border : hov ? T.offwhite : T.white,
-        color: ghost ? (disabled ? T.muted : hov ? T.white : T.subtle) : T.black,
-        fontFamily: T.body, fontSize: small ? 11 : 13, fontWeight: 500,
-        letterSpacing: '0.04em',
-        border: ghost ? `1px solid ${disabled ? T.border : hov ? T.white : T.border}` : 'none',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
-        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
-      }}
+      className={`inline-flex items-center gap-1.5 bg-bss-white text-bss-black font-body font-medium tracking-wide transition-all duration-150
+        hover:bg-bss-offwhite disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-bss-border
+        ${small ? 'px-3.5 py-1.5 text-[11px]' : 'px-7 py-2.5 text-[13px]'}`}
     >
       {children}
     </button>
@@ -128,37 +97,35 @@ function Steps({ current }: { current: Step }) {
   ];
   const idx = steps.findIndex(s => s.key === current);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 36 }}>
+    <div className="flex items-center mb-9">
       {steps.map((s, i) => (
-        <div key={s.key} style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 22, height: 22,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: `1px solid ${i <= idx ? T.white : T.border}`,
-              background: i < idx ? T.white : 'transparent',
-            }}>
+        <div key={s.key} className="flex items-center">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-[22px] h-[22px] flex items-center justify-center border transition-colors"
+              style={{
+                borderColor: i <= idx ? '#ffffff' : '#222222',
+                background:  i <  idx ? '#ffffff' : 'transparent',
+              }}
+            >
               {i < idx ? (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                  stroke={T.black} strokeWidth="2.5" strokeLinecap="round">
+                  stroke="#000000" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
               ) : (
-                <span style={{ fontSize: 9, fontFamily: T.body, fontWeight: 500, color: i === idx ? T.white : T.muted }}>
+                <span className={`text-[9px] font-body font-medium ${i === idx ? 'text-bss-white' : 'text-bss-muted'}`}>
                   {i + 1}
                 </span>
               )}
             </div>
-            <span style={{
-              fontSize: 11, fontFamily: T.body, fontWeight: i === idx ? 500 : 300,
-              color: i === idx ? T.white : i < idx ? T.subtle : T.muted,
-              letterSpacing: '0.06em',
-            }}>
+            <span className={`text-[11px] font-body tracking-[0.06em]
+              ${i === idx ? 'font-medium text-bss-white' : i < idx ? 'font-light text-bss-subtle' : 'font-light text-bss-muted'}`}>
               {s.label}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: 32, height: 1, background: T.border, margin: '0 12px' }} />
+            <div className="w-8 h-px bg-bss-border mx-3" />
           )}
         </div>
       ))}
@@ -169,22 +136,14 @@ function Steps({ current }: { current: Step }) {
 // ── Live signature preview ────────────────────────────────────────────────────
 function SigPreview({ dataUrl }: { dataUrl: string | null }) {
   return (
-    <div style={{
-      border: `1px solid ${T.border}`, background: T.card,
-      padding: '12px 16px', minHeight: 72,
-      display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
-      <p style={{ fontFamily: T.body, fontSize: 10, color: T.muted, margin: 0, letterSpacing: '0.1em', fontWeight: 500 }}>
-        PREVIEW
-      </p>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 60 }}>
+    <div className="border border-bss-border bg-bss-card p-3 min-h-[72px] flex flex-col gap-2">
+      <p className="font-body text-[10px] text-bss-muted tracking-[0.1em] font-medium m-0">PREVIEW</p>
+      <div className="flex-1 flex items-center min-h-[60px]">
         {dataUrl ? (
           <img src={dataUrl} alt="Signature preview"
-            style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain' }} />
+            className="max-h-[60px] max-w-full object-contain" />
         ) : (
-          <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: 0, fontStyle: 'italic' }}>
-            Your signature will appear here as you draw
-          </p>
+          <p className="font-body text-xs text-bss-muted italic">Your signature will appear here as you draw</p>
         )}
       </div>
     </div>
@@ -210,10 +169,10 @@ export default function SignPage() {
   const [outputName, setOutputName] = useState('');
 
   // Draw mode
-  const [inkColor, setInkColor]           = useState(INK_SWATCHES[0].color);
-  const [customInk, setCustomInk]         = useState('#111111');
+  const [inkColor, setInkColor]             = useState(INK_SWATCHES[0].color);
+  const [customInk, setCustomInk]           = useState('#111111');
   const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null);
-  const [savedSig, setSavedSig]           = useState<string | null>(null);
+  const [savedSig, setSavedSig]             = useState<string | null>(null);
   const previewThrottle = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Type mode
@@ -228,10 +187,10 @@ export default function SignPage() {
   const [pdfScale, setPdfScale]           = useState(1.5);
 
   // Stamp options
-  const [showStamp, setShowStamp]   = useState(false);
-  const [stampName, setStampName]   = useState('');
-  const [stampDate, setStampDate]   = useState(true);
-  const [stampText, setStampText]   = useState('');
+  const [showStamp, setShowStamp] = useState(false);
+  const [stampName, setStampName] = useState('');
+  const [stampDate, setStampDate] = useState(true);
+  const [stampText, setStampText] = useState('');
 
   const sigPadRef    = useRef<any>(null);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -242,7 +201,7 @@ export default function SignPage() {
   const pdfJsRef     = useRef<any>(null);
   const pdfDocRef    = useRef<any>(null);
 
-  // ── Inject global styles (client-side only) ────────────────────────────────
+  // ── Inject global styles ───────────────────────────────────────────────────
   useEffect(() => {
     const id = 'sign-page-styles';
     if (document.getElementById(id)) return;
@@ -298,7 +257,7 @@ export default function SignPage() {
     document.head.appendChild(s);
   }, []);
 
-  // ── Load saved signature from localStorage ─────────────────────────────────
+  // ── Load saved signature ───────────────────────────────────────────────────
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SAVED_SIG_KEY);
@@ -337,12 +296,11 @@ export default function SignPage() {
     document.head.appendChild(s);
   }, [step, signMode, inkColor]);
 
-  // ── Update pen color live ──────────────────────────────────────────────────
   useEffect(() => {
     if (sigPadRef.current) sigPadRef.current.penColor = inkColor;
   }, [inkColor]);
 
-  // ── Render type-preview canvas ─────────────────────────────────────────────
+  // ── Type-preview canvas ────────────────────────────────────────────────────
   useEffect(() => {
     if (signMode !== 'type' || !typePreviewRef.current) return;
     const canvas = typePreviewRef.current;
@@ -438,7 +396,7 @@ export default function SignPage() {
     });
   }
 
-  // ── Confirm drawn signature ────────────────────────────────────────────────
+  // ── Confirm signatures ─────────────────────────────────────────────────────
   async function confirmDrawSig() {
     const pad = sigPadRef.current;
     if (!pad || pad.isEmpty()) { setError('Draw your signature first.'); return; }
@@ -451,7 +409,6 @@ export default function SignPage() {
     setStep('place');
   }
 
-  // ── Use saved signature ────────────────────────────────────────────────────
   async function useSavedSig() {
     if (!savedSig) return;
     const { aspect } = await trimCanvasToPng(savedSig);
@@ -461,7 +418,6 @@ export default function SignPage() {
     setStep('place');
   }
 
-  // ── Confirm typed signature ────────────────────────────────────────────────
   async function confirmTypeSig() {
     if (!typedName.trim()) { setError('Type your name first.'); return; }
     setError('');
@@ -473,7 +429,7 @@ export default function SignPage() {
     setStep('place');
   }
 
-  // ── Pointer drag ──────────────────────────────────────────────────────────
+  // ── Pointer drag ───────────────────────────────────────────────────────────
   function onSigPointerDown(e: React.PointerEvent) {
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -492,7 +448,7 @@ export default function SignPage() {
   }
   function onSigPointerUp() { setDragging(false); }
 
-  // ── Pointer resize ────────────────────────────────────────────────────────
+  // ── Pointer resize ─────────────────────────────────────────────────────────
   function onResizePointerDown(e: React.PointerEvent) {
     e.preventDefault(); e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -507,14 +463,14 @@ export default function SignPage() {
   }
   function onResizePointerUp() { setResizing(false); }
 
-  // ── Zoom ──────────────────────────────────────────────────────────────────
+  // ── Zoom ───────────────────────────────────────────────────────────────────
   function handleZoom(dir: 'in' | 'out') {
     const next = dir === 'in' ? Math.min(zoomLevel + 0.25, 3) : Math.max(zoomLevel - 0.25, 0.5);
     setZoomLevel(next);
     setPdfScale(1.5 * next);
   }
 
-  // ── Build stamp text ──────────────────────────────────────────────────────
+  // ── Stamp ──────────────────────────────────────────────────────────────────
   function buildStampLines(): string[] {
     const lines: string[] = [];
     if (stampName.trim()) lines.push(stampName.trim());
@@ -523,7 +479,7 @@ export default function SignPage() {
     return lines;
   }
 
-  // ── Embed signature (multi-page aware + stamp) ────────────────────────────
+  // ── Embed signature ────────────────────────────────────────────────────────
   async function handleEmbed() {
     if (!pdfBytes || !sig) return;
     setLoading(true); setError('');
@@ -540,7 +496,6 @@ export default function SignPage() {
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const pages  = pdfDoc.getPages();
 
-      // Determine which pages to stamp
       let targetPages: number[];
       if (pageMode === 'all') {
         targetPages = pages.map((_: any, i: number) => i);
@@ -565,14 +520,11 @@ export default function SignPage() {
         const page = pages[pi];
         const { width: pW, height: pH } = page.getSize();
         const scaleX = pW / dispW, scaleY = pH / dispH;
-
         const pdfX = sigPos.x * scaleX;
         const pdfY = pH - (sigPos.y * scaleY) - (sigSize.h * scaleY);
         const pdfW = sigSize.w * scaleX;
         const pdfH = sigSize.h * scaleY;
         page.drawImage(pngImg, { x: pdfX, y: pdfY, width: pdfW, height: pdfH });
-
-        // Stamp text below signature
         if (helv && buildStampLines().length > 0) {
           const stampLines = buildStampLines();
           const fontSize = 8;
@@ -608,7 +560,6 @@ export default function SignPage() {
     setShowStamp(false); setStampName(''); setStampDate(true); setStampText('');
   }
 
-  // ── hex → rgb 0–1 ─────────────────────────────────────────────────────────
   function hexToRgb(hex: string): [number, number, number] {
     const r = parseInt(hex.slice(1, 3), 16) / 255;
     const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -621,561 +572,440 @@ export default function SignPage() {
   // ══════════════════════════════════════════════════════════════════════════
   return (
     <>
-      {/* ── Page header ─────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 36 }}>
-        {eyebrow('Tools')}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <h1 style={{
-            fontFamily: T.display, fontWeight: 700,
-            fontSize: 'clamp(2rem, 4vw, 3rem)',
-            color: T.white, lineHeight: 1.05, letterSpacing: '-0.025em', margin: 0,
-          }}>
-            Sign Document
-          </h1>
-          {step !== 'upload' && (
-            <button onClick={reset} style={{
-              fontFamily: T.body, fontSize: 11, color: T.muted,
-              background: 'none', border: 'none', cursor: 'pointer',
-              letterSpacing: '0.08em', padding: 0,
-            }}>
-              ← Start over
-            </button>
-          )}
-        </div>
-        <p style={{
-          fontFamily: T.body, fontWeight: 300, fontSize: '0.9375rem',
-          color: T.subtle, lineHeight: 1.7, marginTop: 12, maxWidth: '52ch',
-        }}>
-          Upload a PDF, draw or type your signature, drag it into position, and download — all in your browser.
-        </p>
-        <div style={{ marginTop: 20, height: 1, background: T.border }} />
-      </div>
-
-      <Steps current={step} />
-
-      {/* ── Error banner ────────────────────────────────────────────────── */}
-      {error && (
-        <div style={{
-          marginBottom: 24, padding: '12px 16px',
-          border: `1px solid ${T.border}`,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke={T.subtle} strokeWidth="1.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
-          </svg>
-          <p style={{ fontFamily: T.body, fontSize: 12, color: T.subtle, margin: 0, fontWeight: 300 }}>
-            {error}
-          </p>
-        </div>
-      )}
-
-      {/* ══ STEP 1 — Upload ═════════════════════════════════════════════ */}
-      {step === 'upload' && (
-        <>
-          <div
-            ref={dropRef}
-            onDragOver={e => { e.preventDefault(); dropRef.current?.classList.add('bss-drop-active'); }}
-            onDragLeave={() => dropRef.current?.classList.remove('bss-drop-active')}
-            onDrop={e => { dropRef.current?.classList.remove('bss-drop-active'); onDrop(e); }}
-            style={{
-              border: `1px solid ${T.border}`,
-              padding: '64px 32px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 20, cursor: 'pointer', transition: 'border-color 0.15s', textAlign: 'center',
-            }}
-            onClick={() => document.getElementById('pdf-input')?.click()}
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-              stroke={T.muted} strokeWidth="1" strokeLinecap="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="12" y1="18" x2="12" y2="12"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-            </svg>
+      {/* ── PAGE HEADER — matches About page pattern ──────────────────── */}
+      <section className="pt-36 pb-20 border-b border-bss-border">
+        <div className="container-site">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p style={{ fontFamily: T.display, fontSize: '1.1rem', fontWeight: 700, color: T.white, margin: '0 0 6px' }}>
-                Drop a PDF here
-              </p>
-              <p style={{ fontFamily: T.body, fontSize: 12, color: T.muted, fontWeight: 300, margin: 0 }}>
-                or click to browse — PDF files only
+              <p className="eyebrow">Tools</p>
+              <h1 className="display-xl max-w-2xl mb-4">Sign Document</h1>
+              <p className="body-lead max-w-prose">
+                Upload a PDF, draw or type your signature, drag it into position, and download — all in your browser.
               </p>
             </div>
-            {loading && (
-              <p style={{ fontFamily: T.body, fontSize: 11, color: T.subtle, letterSpacing: '0.1em' }}>
-                Loading…
-              </p>
+            {step !== 'upload' && (
+              <button
+                onClick={reset}
+                className="font-body text-[11px] text-bss-muted bg-transparent border-none cursor-pointer tracking-[0.08em] hover:text-bss-subtle transition-colors pb-1"
+              >
+                ← Start over
+              </button>
             )}
           </div>
+        </div>
+      </section>
 
-          {/* Privacy note */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-              stroke={T.muted} strokeWidth="1.5" strokeLinecap="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, fontWeight: 300, margin: 0 }}>
-              Your PDF never leaves your browser. All processing is local.
-            </p>
-          </div>
-        </>
-      )}
-      <input
-        id="pdf-input" type="file" accept=".pdf,application/pdf"
-        style={{ display: 'none' }}
-        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-      />
+      {/* ── CONTENT ───────────────────────────────────────────────────── */}
+      <section className="section-pad">
+        <div className="container-site">
+          <Steps current={step} />
 
-      {/* ══ STEP 2 — Sign ═══════════════════════════════════════════════ */}
-      {step === 'sign' && (
-        <div style={{ display: 'grid', gap: 20 }}>
+          {/* Error banner */}
+          {error && (
+            <div className="mb-6 px-4 py-3 border border-bss-border flex items-center gap-2.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                stroke="#888888" strokeWidth="1.5" strokeLinecap="round">
+                <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
+              </svg>
+              <p className="font-body text-xs text-bss-subtle font-light">{error}</p>
+            </div>
+          )}
 
-          {/* ── Ink color ─────────────────────────────────────────────── */}
-          <div>
-            <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: '0 0 10px', letterSpacing: '0.06em' }}>
-              Ink color
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              {INK_SWATCHES.map(sw => (
-                <button
-                  key={sw.color}
-                  onClick={() => setInkColor(sw.color)}
-                  title={sw.label}
-                  style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    background: sw.color,
-                    border: inkColor === sw.color ? `2px solid ${T.white}` : `2px solid transparent`,
-                    cursor: 'pointer', outline: 'none',
-                    boxShadow: inkColor === sw.color ? '0 0 0 1px #555' : 'none',
-                    transition: 'border-color 0.15s',
-                  }}
-                />
-              ))}
-              {/* Custom color */}
-              <div style={{ position: 'relative', width: 28, height: 28 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: `conic-gradient(red, yellow, lime, cyan, blue, magenta, red)`,
-                  border: !INK_SWATCHES.find(s => s.color === inkColor) ? `2px solid ${T.white}` : `2px solid transparent`,
-                  boxShadow: !INK_SWATCHES.find(s => s.color === inkColor) ? '0 0 0 1px #555' : 'none',
-                  cursor: 'pointer',
-                }} />
-                <input
-                  type="color"
-                  value={customInk}
-                  onChange={e => { setCustomInk(e.target.value); setInkColor(e.target.value); }}
-                  title="Custom color"
-                  style={{
-                    position: 'absolute', inset: 0, opacity: 0,
-                    cursor: 'pointer', width: '100%', height: '100%',
-                  }}
-                />
+          {/* ══ STEP 1 — Upload ══════════════════════════════════════════ */}
+          {step === 'upload' && (
+            <>
+              <div
+                ref={dropRef}
+                onDragOver={e => { e.preventDefault(); dropRef.current?.classList.add('bss-drop-active'); }}
+                onDragLeave={() => dropRef.current?.classList.remove('bss-drop-active')}
+                onDrop={e => { dropRef.current?.classList.remove('bss-drop-active'); onDrop(e); }}
+                onClick={() => document.getElementById('pdf-input')?.click()}
+                className="border border-bss-border px-8 py-16 flex flex-col items-center justify-center gap-5 cursor-pointer transition-colors text-center hover:border-bss-subtle"
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                  stroke="#555555" strokeWidth="1" strokeLinecap="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                <div>
+                  <p className="font-display text-lg font-bold text-bss-white mb-1.5">Drop a PDF here</p>
+                  <p className="font-body text-xs text-bss-muted font-light">or click to browse — PDF files only</p>
+                </div>
+                {loading && <p className="font-body text-[11px] text-bss-subtle tracking-[0.1em]">Loading…</p>}
               </div>
-              <span style={{ fontFamily: T.body, fontSize: 11, color: T.muted, marginLeft: 4 }}>
-                {INK_SWATCHES.find(s => s.color === inkColor)?.label ?? 'Custom'}
-              </span>
-            </div>
-          </div>
 
-          {/* ── Mode tabs + panels ─────────────────────────────────────── */}
-          <div style={{ border: `1px solid ${T.border}` }}>
-            <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}` }}>
-              {(['draw', 'type'] as SignMode[]).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => { setSignMode(mode); setError(''); }}
-                  style={{
-                    flex: 1, padding: '9px 0',
-                    fontFamily: T.body, fontSize: 12, fontWeight: 500,
-                    letterSpacing: '0.05em',
-                    background: signMode === mode ? T.card : 'transparent',
-                    color: signMode === mode ? T.white : T.muted,
-                    border: 'none',
-                    borderRight: mode === 'draw' ? `1px solid ${T.border}` : 'none',
-                    cursor: 'pointer', transition: 'color 0.15s, background 0.15s',
-                  }}
-                >
-                  {mode === 'draw' ? 'Draw' : 'Type'}
-                </button>
-              ))}
-            </div>
+              <div className="flex items-center gap-2 mt-3">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                  stroke="#555555" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <p className="font-body text-[11px] text-bss-muted font-light">
+                  Your PDF never leaves your browser. All processing is local.
+                </p>
+              </div>
 
-            {/* ── Draw panel ────────────────────────────────────────── */}
-            {signMode === 'draw' && (
-              <div style={{ padding: 16, display: 'grid', gap: 16 }}>
-                {/* Saved signature shortcut */}
-                {savedSig && (
-                  <div style={{
-                    border: `1px solid ${T.border}`, padding: '10px 14px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                    flexWrap: 'wrap',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src={savedSig} alt="Saved signature"
-                        style={{ height: 32, maxWidth: 120, objectFit: 'contain', opacity: 0.8 }} />
-                      <span style={{ fontFamily: T.body, fontSize: 11, color: T.muted }}>
-                        Saved signature
-                      </span>
+              {/* How it works */}
+              <div className="border-t border-bss-border pt-7 mt-10">
+                <p className="eyebrow mb-5">How it works</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {([
+                    ['Upload',   'Drop any PDF — it never leaves your device.'],
+                    ['Sign',     'Draw with your finger or type your name.'],
+                    ['Place',    'Drag to position, resize, pick pages, add a stamp.'],
+                    ['Download', 'The signed PDF is generated and saved locally.'],
+                  ] as const).map(([title, desc]) => (
+                    <div key={title}>
+                      <p className="display-md text-base mb-1.5">{title}</p>
+                      <p className="body-base text-xs leading-relaxed">{desc}</p>
                     </div>
-                    <Btn small onClick={useSavedSig}>
-                      Use saved
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ══ STEP 2 — Sign ════════════════════════════════════════════ */}
+          {step === 'sign' && (
+            <div className="grid gap-5">
+
+              {/* Ink color */}
+              <div>
+                <p className="font-body text-[11px] text-bss-muted mb-2.5 tracking-[0.06em]">Ink color</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {INK_SWATCHES.map(sw => (
+                    <button
+                      key={sw.color}
+                      onClick={() => setInkColor(sw.color)}
+                      title={sw.label}
+                      className="w-7 h-7 rounded-full cursor-pointer outline-none transition-all"
+                      style={{
+                        background: sw.color,
+                        border: inkColor === sw.color ? '2px solid #ffffff' : '2px solid transparent',
+                        boxShadow: inkColor === sw.color ? '0 0 0 1px #555' : 'none',
+                      }}
+                    />
+                  ))}
+                  {/* Custom color */}
+                  <div className="relative w-7 h-7">
+                    <div
+                      className="w-7 h-7 rounded-full cursor-pointer"
+                      style={{
+                        background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                        border: !INK_SWATCHES.find(s => s.color === inkColor) ? '2px solid #ffffff' : '2px solid transparent',
+                        boxShadow: !INK_SWATCHES.find(s => s.color === inkColor) ? '0 0 0 1px #555' : 'none',
+                      }}
+                    />
+                    <input
+                      type="color" value={customInk}
+                      onChange={e => { setCustomInk(e.target.value); setInkColor(e.target.value); }}
+                      title="Custom color"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </div>
+                  <span className="font-body text-[11px] text-bss-muted ml-1">
+                    {INK_SWATCHES.find(s => s.color === inkColor)?.label ?? 'Custom'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Mode tabs */}
+              <div className="border border-bss-border">
+                <div className="flex border-b border-bss-border">
+                  {(['draw', 'type'] as SignMode[]).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => { setSignMode(mode); setError(''); }}
+                      className={`flex-1 py-2.5 font-body text-xs font-medium tracking-[0.05em] transition-colors duration-150 border-r last:border-r-0 border-bss-border
+                        ${signMode === mode ? 'bg-bss-card text-bss-white' : 'bg-transparent text-bss-muted hover:text-bss-subtle'}`}
+                    >
+                      {mode === 'draw' ? 'Draw' : 'Type'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Draw panel */}
+                {signMode === 'draw' && (
+                  <div className="p-4 grid gap-4">
+                    {savedSig && (
+                      <div className="border border-bss-border px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3">
+                          <img src={savedSig} alt="Saved signature"
+                            className="h-8 max-w-[120px] object-contain opacity-80" />
+                          <span className="font-body text-[11px] text-bss-muted">Saved signature</span>
+                        </div>
+                        <Btn small onClick={useSavedSig}>Use saved</Btn>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="font-body text-[11px] text-bss-muted mb-2.5 tracking-[0.06em]">Draw your signature</p>
+                      <div className="relative border border-bss-border bg-bss-card">
+                        <canvas
+                          ref={sigCanvasRef}
+                          className="block w-full touch-none"
+                          style={{ height: 160 }}
+                        />
+                        {!livePreviewUrl && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <p className="font-body text-[11px] text-bss-muted opacity-50 tracking-[0.08em]">Sign here</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="h-px bg-bss-border" />
+                    </div>
+
+                    <SigPreview dataUrl={livePreviewUrl} />
+
+                    <div className="flex gap-2.5">
+                      <Btn onClick={confirmDrawSig}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Use this signature
+                      </Btn>
+                      <Btn ghost onClick={() => { sigPadRef.current?.clear(); setLivePreviewUrl(null); }}>Clear</Btn>
+                    </div>
+                  </div>
+                )}
+
+                {/* Type panel */}
+                {signMode === 'type' && (
+                  <div className="p-4 grid gap-4">
+                    <div>
+                      <p className="font-body text-[11px] text-bss-muted mb-2.5 tracking-[0.06em]">Type your name</p>
+                      <input
+                        type="text" value={typedName}
+                        onChange={e => setTypedName(e.target.value)}
+                        placeholder="Your full name"
+                        className="w-full px-3.5 py-2.5 bg-bss-card border border-bss-border text-bss-white font-body text-sm outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="font-body text-[11px] text-bss-muted mb-2.5 tracking-[0.06em]">Choose a style</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {CURSIVE_FONTS.map((f, i) => (
+                          <button
+                            key={f.label}
+                            onClick={() => setSelectedFont(i)}
+                            className={`px-4 py-3 flex flex-col items-start gap-1 transition-colors cursor-pointer
+                              ${selectedFont === i ? 'bg-bss-card border border-bss-white' : 'bg-transparent border border-bss-border hover:border-bss-subtle'}`}
+                          >
+                            <span className="font-body text-[10px] text-bss-muted tracking-[0.1em]">{f.label}</span>
+                            <span style={{ fontFamily: f.family, fontSize: 22, color: inkColor, lineHeight: 1.2 }}>
+                              {typedName || 'Your name'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <canvas ref={typePreviewRef}
+                      className="block w-full invisible absolute"
+                      style={{ height: 100 }}
+                    />
+
+                    <div className="border border-bss-border bg-bss-card px-4 py-3 min-h-[72px] flex flex-col gap-2">
+                      <p className="font-body text-[10px] text-bss-muted tracking-[0.1em] font-medium">PREVIEW</p>
+                      {typedName.trim() ? (
+                        <span style={{ fontFamily: CURSIVE_FONTS[selectedFont].family, fontSize: 40, color: inkColor, lineHeight: 1.3 }}>
+                          {typedName}
+                        </span>
+                      ) : (
+                        <p className="font-body text-xs text-bss-muted italic">Type your name above to see a preview</p>
+                      )}
+                    </div>
+
+                    <Btn onClick={confirmTypeSig}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Use this signature
                     </Btn>
                   </div>
                 )}
-
-                <div>
-                  <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: '0 0 10px', letterSpacing: '0.06em' }}>
-                    Draw your signature
-                  </p>
-                  <div style={{ position: 'relative', border: `1px solid ${T.border}`, background: T.card }}>
-                    <canvas
-                      ref={sigCanvasRef}
-                      style={{ display: 'block', width: '100%', height: 160, touchAction: 'none' }}
-                    />
-                    {!livePreviewUrl && (
-                      <div style={{
-                        position: 'absolute', inset: 0, display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
-                      }}>
-                        <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, opacity: 0.5, letterSpacing: '0.08em' }}>
-                          Sign here
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ height: 1, background: T.border }} />
-                </div>
-
-                <SigPreview dataUrl={livePreviewUrl} />
-
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <Btn onClick={confirmDrawSig}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Use this signature
-                  </Btn>
-                  <Btn ghost onClick={() => { sigPadRef.current?.clear(); setLivePreviewUrl(null); }}>
-                    Clear
-                  </Btn>
-                </div>
               </div>
-            )}
-
-            {/* ── Type panel ────────────────────────────────────────── */}
-            {signMode === 'type' && (
-              <div style={{ padding: 16, display: 'grid', gap: 16 }}>
-                <div>
-                  <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: '0 0 10px', letterSpacing: '0.06em' }}>
-                    Type your name
-                  </p>
-                  <input
-                    type="text"
-                    value={typedName}
-                    onChange={e => setTypedName(e.target.value)}
-                    placeholder="Your full name"
-                    style={{
-                      width: '100%', boxSizing: 'border-box', padding: '10px 14px',
-                      background: T.card, border: `1px solid ${T.border}`,
-                      color: T.white, fontFamily: T.body, fontSize: 14, outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: '0 0 10px', letterSpacing: '0.06em' }}>
-                    Choose a style
-                  </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    {CURSIVE_FONTS.map((f, i) => (
-                      <button
-                        key={f.label}
-                        onClick={() => setSelectedFont(i)}
-                        style={{
-                          padding: '12px 16px',
-                          background: selectedFont === i ? T.card : 'transparent',
-                          border: `1px solid ${selectedFont === i ? T.white : T.border}`,
-                          cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                          alignItems: 'flex-start', gap: 4, transition: 'border-color 0.15s',
-                        }}
-                      >
-                        <span style={{ fontFamily: T.body, fontSize: 10, color: T.muted, letterSpacing: '0.1em' }}>
-                          {f.label}
-                        </span>
-                        <span style={{ fontFamily: f.family, fontSize: 22, color: inkColor, lineHeight: 1.2 }}>
-                          {typedName || 'Your name'}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Off-screen canvas for rasterizing typed sig */}
-                <canvas ref={typePreviewRef}
-                  style={{ display: 'block', width: '100%', height: 100, visibility: 'hidden', position: 'absolute' }}
-                />
-
-                {/* Preview */}
-                <div style={{
-                  border: `1px solid ${T.border}`, background: T.card,
-                  padding: '12px 16px', minHeight: 72, display: 'flex', flexDirection: 'column', gap: 8,
-                }}>
-                  <p style={{ fontFamily: T.body, fontSize: 10, color: T.muted, margin: 0, letterSpacing: '0.1em', fontWeight: 500 }}>
-                    PREVIEW
-                  </p>
-                  {typedName.trim() ? (
-                    <span style={{ fontFamily: CURSIVE_FONTS[selectedFont].family, fontSize: 40, color: inkColor, lineHeight: 1.3 }}>
-                      {typedName}
-                    </span>
-                  ) : (
-                    <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: 0, fontStyle: 'italic' }}>
-                      Type your name above to see a preview
-                    </p>
-                  )}
-                </div>
-
-                <Btn onClick={confirmTypeSig}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  Use this signature
-                </Btn>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ══ STEP 3 — Place ══════════════════════════════════════════════ */}
-      {step === 'place' && sig && (
-        <div style={{ display: 'grid', gap: 20 }}>
-
-          {/* ── Page navigation + zoom ─────────────────────────────── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            {pageCount > 1 && (
-              <>
-                <Btn ghost small onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Prev</Btn>
-                <span style={{ fontFamily: T.body, fontSize: 11, color: T.muted }}>
-                  Page {currentPage} / {pageCount}
-                </span>
-                <Btn ghost small onClick={() => setCurrentPage(p => Math.min(pageCount, p + 1))} disabled={currentPage === pageCount}>Next →</Btn>
-                <div style={{ width: 1, height: 16, background: T.border, margin: '0 4px' }} />
-              </>
-            )}
-            {/* Zoom */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Btn ghost small onClick={() => handleZoom('out')} disabled={zoomLevel <= 0.5}>−</Btn>
-              <span style={{ fontFamily: T.body, fontSize: 11, color: T.muted, minWidth: 36, textAlign: 'center' }}>
-                {Math.round(zoomLevel * 100)}%
-              </span>
-              <Btn ghost small onClick={() => handleZoom('in')} disabled={zoomLevel >= 3}>+</Btn>
-            </div>
-          </div>
-
-          {/* ── Multi-page placement mode ──────────────────────────── */}
-          {pageCount > 1 && (
-            <div style={{ border: `1px solid ${T.border}`, padding: '14px 16px', display: 'grid', gap: 12 }}>
-              <p style={{ fontFamily: T.body, fontSize: 11, color: T.muted, margin: 0, letterSpacing: '0.06em' }}>
-                Apply signature to
-              </p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {([
-                  { key: 'current', label: 'This page only' },
-                  { key: 'all',     label: 'All pages' },
-                  { key: 'select',  label: 'Select pages' },
-                ] as { key: PageMode; label: string }[]).map(opt => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setPageMode(opt.key)}
-                    style={{
-                      padding: '6px 14px', fontFamily: T.body, fontSize: 11, fontWeight: 500,
-                      background: pageMode === opt.key ? T.white : 'transparent',
-                      color: pageMode === opt.key ? T.black : T.muted,
-                      border: `1px solid ${pageMode === opt.key ? T.white : T.border}`,
-                      cursor: 'pointer', transition: 'all 0.12s',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Page chip picker */}
-              {pageMode === 'select' && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                  {Array.from({ length: pageCount }, (_, i) => i + 1).map(p => {
-                    const sel = selectedPages.has(p);
-                    return (
-                      <button
-                        key={p}
-                        className={`page-chip${sel ? ' selected' : ''}`}
-                        onClick={() => {
-                          const next = new Set(selectedPages);
-                          sel ? next.delete(p) : next.add(p);
-                          setSelectedPages(next);
-                        }}
-                      >
-                        {p}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           )}
 
-          {/* ── Date/name stamp ───────────────────────────────────────── */}
-          <div style={{ border: `1px solid ${T.border}`, padding: '14px 16px', display: 'grid', gap: 12 }}>
-            <Toggle checked={showStamp} onChange={setShowStamp} label="Add text stamp below signature" />
-            {showStamp && (
-              <div style={{ display: 'grid', gap: 10, paddingTop: 4 }}>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    value={stampName}
-                    onChange={e => setStampName(e.target.value)}
-                    placeholder="Name (optional)"
-                    style={{
-                      flex: 1, minWidth: 140, padding: '7px 12px',
-                      background: T.card, border: `1px solid ${T.border}`,
-                      color: T.white, fontFamily: T.body, fontSize: 12, outline: 'none',
-                    }}
-                  />
-                  <input
-                    type="text"
-                    value={stampText}
-                    onChange={e => setStampText(e.target.value)}
-                    placeholder={'"Signed" or custom text'}
-                    style={{
-                      flex: 1, minWidth: 140, padding: '7px 12px',
-                      background: T.card, border: `1px solid ${T.border}`,
-                      color: T.white, fontFamily: T.body, fontSize: 12, outline: 'none',
-                    }}
-                  />
+          {/* ══ STEP 3 — Place ═══════════════════════════════════════════ */}
+          {step === 'place' && sig && (
+            <div className="grid gap-5">
+
+              {/* Page nav + zoom */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {pageCount > 1 && (
+                  <>
+                    <Btn ghost small onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Prev</Btn>
+                    <span className="font-body text-[11px] text-bss-muted">Page {currentPage} / {pageCount}</span>
+                    <Btn ghost small onClick={() => setCurrentPage(p => Math.min(pageCount, p + 1))} disabled={currentPage === pageCount}>Next →</Btn>
+                    <div className="w-px h-4 bg-bss-border mx-1" />
+                  </>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <Btn ghost small onClick={() => handleZoom('out')} disabled={zoomLevel <= 0.5}>−</Btn>
+                  <span className="font-body text-[11px] text-bss-muted min-w-[36px] text-center">
+                    {Math.round(zoomLevel * 100)}%
+                  </span>
+                  <Btn ghost small onClick={() => handleZoom('in')} disabled={zoomLevel >= 3}>+</Btn>
                 </div>
-                <Toggle checked={stampDate} onChange={setStampDate} label={`Include today's date (${new Date().toLocaleDateString()})`} />
-                {buildStampLines().length > 0 && (
-                  <div style={{ padding: '8px 12px', background: T.card, border: `1px solid ${T.border}` }}>
-                    {buildStampLines().map((l, i) => (
-                      <p key={i} style={{ fontFamily: T.body, fontSize: 11, color: T.subtle, margin: '1px 0' }}>{l}</p>
+              </div>
+
+              {/* Multi-page placement */}
+              {pageCount > 1 && (
+                <div className="border border-bss-border px-4 py-3.5 grid gap-3">
+                  <p className="font-body text-[11px] text-bss-muted tracking-[0.06em]">Apply signature to</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {([
+                      { key: 'current', label: 'This page only' },
+                      { key: 'all',     label: 'All pages' },
+                      { key: 'select',  label: 'Select pages' },
+                    ] as { key: PageMode; label: string }[]).map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setPageMode(opt.key)}
+                        className={`px-3.5 py-1.5 font-body text-[11px] font-medium transition-all cursor-pointer
+                          ${pageMode === opt.key
+                            ? 'bg-bss-white text-bss-black border border-bss-white'
+                            : 'bg-transparent text-bss-muted border border-bss-border hover:border-bss-subtle'}`}
+                      >
+                        {opt.label}
+                      </button>
                     ))}
+                  </div>
+                  {pageMode === 'select' && (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {Array.from({ length: pageCount }, (_, i) => i + 1).map(p => {
+                        const sel = selectedPages.has(p);
+                        return (
+                          <button
+                            key={p}
+                            className={`page-chip${sel ? ' selected' : ''}`}
+                            onClick={() => {
+                              const next = new Set(selectedPages);
+                              sel ? next.delete(p) : next.add(p);
+                              setSelectedPages(next);
+                            }}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Stamp options */}
+              <div className="border border-bss-border px-4 py-3.5 grid gap-3">
+                <Toggle checked={showStamp} onChange={setShowStamp} label="Add text stamp below signature" />
+                {showStamp && (
+                  <div className="grid gap-2.5 pt-1">
+                    <div className="flex gap-2.5 flex-wrap items-center">
+                      <input
+                        type="text" value={stampName}
+                        onChange={e => setStampName(e.target.value)}
+                        placeholder="Name (optional)"
+                        className="flex-1 min-w-[140px] px-3 py-1.5 bg-bss-card border border-bss-border text-bss-white font-body text-xs outline-none"
+                      />
+                      <input
+                        type="text" value={stampText}
+                        onChange={e => setStampText(e.target.value)}
+                        placeholder={'"Signed" or custom text'}
+                        className="flex-1 min-w-[140px] px-3 py-1.5 bg-bss-card border border-bss-border text-bss-white font-body text-xs outline-none"
+                      />
+                    </div>
+                    <Toggle checked={stampDate} onChange={setStampDate} label={`Include today's date (${new Date().toLocaleDateString()})`} />
+                    {buildStampLines().length > 0 && (
+                      <div className="px-3 py-2 bg-bss-card border border-bss-border">
+                        {buildStampLines().map((l, i) => (
+                          <p key={i} className="font-body text-[11px] text-bss-subtle my-px">{l}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* ── PDF canvas with overlay ─────────────────────────────── */}
-          <div style={{ position: 'relative', border: `1px solid ${T.border}`, lineHeight: 0, overflow: 'hidden' }}>
-            <canvas ref={pdfCanvasRef} style={{ display: 'block', width: '100%', height: 'auto' }} />
-            <div
-              className="sig-overlay"
-              onPointerDown={onSigPointerDown}
-              onPointerMove={onSigPointerMove}
-              onPointerUp={onSigPointerUp}
-              style={{ left: sigPos.x, top: sigPos.y, width: sigSize.w, height: sigSize.h, outline: `1px dashed ${T.muted}` }}
-            >
-              <img src={sig.dataUrl} draggable={false} alt="signature"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' }} />
-              <div
-                className="sig-handle"
-                onPointerDown={onResizePointerDown}
-                onPointerMove={onResizePointerMove}
-                onPointerUp={onResizePointerUp}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: T.body, fontSize: 11, color: T.muted, fontWeight: 300 }}>
-              {sigSize.w} × {sigSize.h} px · {Math.round(sigPos.x)}, {Math.round(sigPos.y)}
-              {pageMode === 'all' && <span style={{ marginLeft: 8, color: T.subtle }}>All {pageCount} pages</span>}
-              {pageMode === 'select' && selectedPages.size > 0 && (
-                <span style={{ marginLeft: 8, color: T.subtle }}>{selectedPages.size} page{selectedPages.size !== 1 ? 's' : ''}</span>
-              )}
-            </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
-              <Btn ghost onClick={() => setStep('sign')}>Redraw</Btn>
-              <Btn
-                onClick={handleEmbed}
-                disabled={loading || (pageMode === 'select' && selectedPages.size === 0)}
-              >
-                {loading ? 'Embedding…' : 'Stamp & Download'}
-              </Btn>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ STEP 4 — Done ═══════════════════════════════════════════════ */}
-      {step === 'done' && (
-        <div style={{ display: 'grid', gap: 24 }}>
-          <div style={{ padding: '20px', border: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke={T.white} strokeWidth="1.5" strokeLinecap="round">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-            <div>
-              <p style={{ fontFamily: T.display, fontSize: '1rem', fontWeight: 700, color: T.white, margin: '0 0 3px' }}>
-                Signature embedded
-              </p>
-              <p style={{ fontFamily: T.body, fontSize: 12, color: T.subtle, fontWeight: 300, margin: 0 }}>
-                Your signed PDF is ready to download.
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a
-              href={outputUrl} download={outputName}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '11px 28px', background: T.white, color: T.black,
-                fontFamily: T.body, fontSize: 13, fontWeight: 500, letterSpacing: '0.04em',
-                textDecoration: 'none',
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Download {outputName}
-            </a>
-            <Btn ghost onClick={reset}>Sign another document</Btn>
-          </div>
-        </div>
-      )}
-
-      {/* ── How it works ─────────────────────────────────────────────── */}
-      {step === 'upload' && (
-        <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 28, marginTop: 40 }}>
-          <p style={{
-            fontFamily: T.body, fontSize: 10, fontWeight: 500,
-            letterSpacing: '0.16em', textTransform: 'uppercase', color: T.muted, marginBottom: 20,
-          }}>
-            How it works
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24 }}>
-            {([
-              ['Upload',   'Drop any PDF — it never leaves your device.'],
-              ['Sign',     'Draw with your finger or type your name.'],
-              ['Place',    'Drag to position, resize, pick pages, add a stamp.'],
-              ['Download', 'The signed PDF is generated and saved locally.'],
-            ] as const).map(([title, desc]) => (
-              <div key={title}>
-                <p style={{ fontFamily: T.display, fontSize: '1rem', fontWeight: 700, color: T.white, margin: '0 0 6px' }}>
-                  {title}
-                </p>
-                <p style={{ fontFamily: T.body, fontSize: 12, fontWeight: 300, color: T.subtle, margin: 0, lineHeight: 1.7 }}>
-                  {desc}
-                </p>
+              {/* PDF canvas */}
+              <div className="relative border border-bss-border leading-[0] overflow-hidden">
+                <canvas ref={pdfCanvasRef} className="block w-full h-auto" />
+                <div
+                  className="sig-overlay"
+                  onPointerDown={onSigPointerDown}
+                  onPointerMove={onSigPointerMove}
+                  onPointerUp={onSigPointerUp}
+                  style={{ left: sigPos.x, top: sigPos.y, width: sigSize.w, height: sigSize.h, outline: '1px dashed #555555' }}
+                >
+                  <img src={sig.dataUrl} draggable={false} alt="signature"
+                    className="w-full h-full object-contain block pointer-events-none" />
+                  <div
+                    className="sig-handle"
+                    onPointerDown={onResizePointerDown}
+                    onPointerMove={onResizePointerMove}
+                    onPointerUp={onResizePointerUp}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center gap-4 flex-wrap">
+                <span className="font-body text-[11px] text-bss-muted font-light">
+                  {sigSize.w} × {sigSize.h} px · {Math.round(sigPos.x)}, {Math.round(sigPos.y)}
+                  {pageMode === 'all' && <span className="ml-2 text-bss-subtle">All {pageCount} pages</span>}
+                  {pageMode === 'select' && selectedPages.size > 0 && (
+                    <span className="ml-2 text-bss-subtle">{selectedPages.size} page{selectedPages.size !== 1 ? 's' : ''}</span>
+                  )}
+                </span>
+                <div className="ml-auto flex gap-2.5">
+                  <Btn ghost onClick={() => setStep('sign')}>Redraw</Btn>
+                  <Btn
+                    onClick={handleEmbed}
+                    disabled={loading || (pageMode === 'select' && selectedPages.size === 0)}
+                  >
+                    {loading ? 'Embedding…' : 'Stamp & Download'}
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══ STEP 4 — Done ════════════════════════════════════════════ */}
+          {step === 'done' && (
+            <div className="grid gap-6">
+              <div className="p-5 border border-bss-border flex items-center gap-3.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <div>
+                  <p className="font-display text-base font-bold text-bss-white mb-0.5">Signature embedded</p>
+                  <p className="font-body text-xs text-bss-subtle font-light">Your signed PDF is ready to download.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                <a
+                  href={outputUrl} download={outputName}
+                  className="btn-primary"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download {outputName}
+                </a>
+                <Btn ghost onClick={reset}>Sign another document</Btn>
+              </div>
+            </div>
+          )}
+
         </div>
-      )}
+      </section>
     </>
   );
 }

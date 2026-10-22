@@ -36,34 +36,15 @@ function extractVideoId(url: string): string | null {
   }
 }
 
-// ── BSS design tokens (inline — no Tailwind needed for tool components) ───────
-const T = {
-  black:    '#000000',
-  surface:  '#0c0c0c',
-  card:     '#141414',
-  border:   '#222222',
-  muted:    '#555555',
-  subtle:   '#888888',
-  offwhite: '#e8e8e8',
-  white:    '#ffffff',
-  display:  '"Playfair Display", Georgia, serif',
-  body:     '"Inter", system-ui, sans-serif',
-} as const;
-
 // ── Sub-components ────────────────────────────────────────────────────────────
-
 function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <div style={{ marginBottom: 8 }}>
-      <label style={{
-        display: 'block',
-        fontSize: 10, fontWeight: 500, fontFamily: T.body,
-        color: T.muted, letterSpacing: '0.16em', textTransform: 'uppercase',
-      }}>
+    <div className="mb-2">
+      <label className="block text-[10px] font-medium font-body text-bss-muted tracking-[0.16em] uppercase">
         {children}
       </label>
       {hint && (
-        <p style={{ fontSize: 11, color: T.subtle, marginTop: 3, fontFamily: T.body, fontWeight: 300 }}>
+        <p className="text-[11px] text-bss-subtle mt-1 font-body font-light leading-snug">
           {hint}
         </p>
       )}
@@ -79,24 +60,21 @@ function BSSInput({
   placeholder?: string;
   error?: string;
 }) {
-  const [focused, setFocused] = useState(false);
   return (
     <input
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        width: '100%', boxSizing: 'border-box',
-        padding: '10px 14px',
-        fontSize: 13, fontFamily: T.body, fontWeight: 300,
-        color: T.offwhite,
-        background: T.black,
-        border: `1px solid ${error ? '#555' : focused ? T.offwhite : T.border}`,
-        borderRadius: 0, outline: 'none',
-        transition: 'border-color 0.15s',
-      }}
+      className={[
+        'w-full px-3.5 py-2.5',
+        'text-[13px] font-body font-light text-bss-offwhite',
+        'bg-bss-black rounded-none outline-none',
+        'border transition-colors duration-150',
+        'placeholder:text-bss-muted',
+        error
+          ? 'border-bss-muted'
+          : 'border-bss-border focus:border-bss-white',
+      ].join(' ')}
     />
   );
 }
@@ -104,31 +82,22 @@ function BSSInput({
 type Status = 'idle' | 'preparing' | 'downloading' | 'done' | 'error';
 
 function StatusPill({ status }: { status: Status }) {
-  const map: Record<Status, { label: string; color: string }> = {
-    idle:        { label: 'Ready',     color: T.muted    },
-    preparing:   { label: 'Preparing', color: T.subtle   },
-    downloading: { label: 'Trimming',  color: T.offwhite },
-    done:        { label: 'Complete',  color: T.white     },
-    error:       { label: 'Failed',    color: T.subtle   },
+  const map: Record<Status, { label: string; cls: string }> = {
+    idle:        { label: 'Ready',     cls: 'text-bss-muted'    },
+    preparing:   { label: 'Preparing', cls: 'text-bss-subtle'   },
+    downloading: { label: 'Trimming',  cls: 'text-bss-offwhite' },
+    done:        { label: 'Complete',  cls: 'text-bss-white'    },
+    error:       { label: 'Failed',    cls: 'text-bss-subtle'   },
   };
   const s = map[status];
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '3px 0',
-      fontSize: 10, fontFamily: T.body, fontWeight: 500,
-      letterSpacing: '0.14em', textTransform: 'uppercase',
-      color: s.color,
-    }}>
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-medium font-body tracking-[0.14em] uppercase ${s.cls}`}>
       {status === 'downloading' && (
-        <span style={{
-          width: 5, height: 5, borderRadius: '50%', background: T.white,
-          animation: 'bss-pulse 1.4s ease-in-out infinite',
-        }} />
+        <span className="w-[5px] h-[5px] rounded-full bg-bss-white animate-[bss-pulse_1.4s_ease-in-out_infinite]" />
       )}
       {status === 'done' && (
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-          stroke={T.white} strokeWidth="2.5" strokeLinecap="round">
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
           <path d="M20 6L9 17l-5-5" />
         </svg>
       )}
@@ -160,12 +129,12 @@ export default function YTTrimPage() {
 
   function validate(): boolean {
     const e: Record<string, string> = {};
-    if (!url.trim())        e.url   = 'Paste a YouTube URL.';
-    else if (!videoId)      e.url   = "Doesn't look like a valid YouTube URL.";
-    if (!start.trim())      e.start = 'Enter a start time.';
+    if (!url.trim())           e.url   = 'Paste a YouTube URL.';
+    else if (!videoId)         e.url   = "Doesn't look like a valid YouTube URL.";
+    if (!start.trim())         e.start = 'Enter a start time.';
     else if (startSec == null) e.start = 'Use HH:MM:SS or plain seconds.';
-    if (!end.trim())        e.end   = 'Enter an end time or duration.';
-    else if (endSec == null) e.end  = 'Use HH:MM:SS or plain seconds.';
+    if (!end.trim())           e.end   = 'Enter an end time or duration.';
+    else if (endSec == null)   e.end   = 'Use HH:MM:SS or plain seconds.';
     if (!e.start && !e.end) {
       if (endMode === 'endtime'  && endSec! <= startSec!) e.end = 'End must be after start.';
       if (endMode === 'duration' && endSec! <= 0)         e.end = 'Duration must be greater than 0.';
@@ -251,358 +220,251 @@ export default function YTTrimPage() {
 
   return (
     <>
-      {/* keyframe injected once */}
       <style>{`
         @keyframes bss-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
         @keyframes bss-bar   { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
-        .bss-trim-input::placeholder { color: ${T.muted}; }
       `}</style>
 
-      {/* ── Page header ────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 40 }}>
-        <p style={{
-          fontFamily: T.body, fontSize: 10, fontWeight: 500,
-          letterSpacing: '0.18em', textTransform: 'uppercase',
-          color: T.muted, marginBottom: 12,
-        }}>
-          Tools
-        </p>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
-          <h1 style={{
-            fontFamily: T.display, fontWeight: 700, fontSize: 'clamp(2rem, 4vw, 3rem)',
-            color: T.white, lineHeight: 1.05, letterSpacing: '-0.025em', margin: 0,
-          }}>
-            Clip Trimmer
-          </h1>
-          <StatusPill status={status} />
+      {/* ── PAGE HEADER — matches About page pattern ──────────────────── */}
+      <section className="pt-36 pb-20 border-b border-bss-border">
+        <div className="container-site">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <p className="eyebrow">Tools</p>
+              <h1 className="display-xl max-w-2xl mb-4">Clip Trimmer</h1>
+              <p className="body-lead max-w-prose">
+                Paste a YouTube link, set your clip window, and download an MP4 — nothing stored on the server.
+              </p>
+            </div>
+            <StatusPill status={status} />
+          </div>
         </div>
-        <p style={{
-          fontFamily: T.body, fontWeight: 300, fontSize: '0.9375rem',
-          color: T.subtle, lineHeight: 1.7, marginTop: 12, maxWidth: '52ch',
-        }}>
-          Paste a YouTube link, set your clip window, and download an MP4 — nothing stored on the server.
-        </p>
-        <div style={{ marginTop: 20, height: 1, background: T.border }} />
-      </div>
+      </section>
 
-      {/* ── Form ───────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gap: 28, maxWidth: 680 }}>
+      {/* ── CONTENT ───────────────────────────────────────────────────── */}
+      <section className="section-pad">
+        <div className="container-site">
+          <div className="grid gap-7 max-w-prose">
 
-        {/* Video URL */}
-        <div>
-          <FieldLabel hint="Any youtube.com or youtu.be link">Video URL</FieldLabel>
-          <BSSInput
-            value={url}
-            onChange={v => { setUrl(v); setErrors(e => ({ ...e, url: '' })); }}
-            placeholder="https://www.youtube.com/watch?v=…"
-            error={errors.url}
-          />
-          {errors.url && (
-            <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
-              {errors.url}
-            </p>
-          )}
-
-          {/* Thumbnail preview */}
-          {videoId && (
-            <div style={{
-              marginTop: 12, position: 'relative', overflow: 'hidden',
-              border: `1px solid ${T.border}`, aspectRatio: '16/5', maxHeight: 110,
-              background: T.black,
-            }}>
-              <img
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Video thumbnail"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55, display: 'block' }}
+            {/* Video URL */}
+            <div>
+              <FieldLabel hint="Any youtube.com or youtu.be link">Video URL</FieldLabel>
+              <BSSInput
+                value={url}
+                onChange={v => { setUrl(v); setErrors(e => ({ ...e, url: '' })); }}
+                placeholder="https://www.youtube.com/watch?v=…"
+                error={errors.url}
               />
-              <div style={{
-                position: 'absolute', inset: 0,
-                display: 'flex', alignItems: 'center', padding: '0 20px',
-              }}>
-                <p style={{
-                  color: T.white, fontSize: 12, fontFamily: T.body,
-                  fontWeight: 400, margin: 0, letterSpacing: '0.04em',
-                }}>
-                  Video found — set your clip times below
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Timing row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <FieldLabel hint="HH:MM:SS or plain seconds">Start time</FieldLabel>
-            <BSSInput
-              value={start}
-              onChange={v => { setStart(v); setErrors(e => ({ ...e, start: '' })); }}
-              placeholder="0:30 or 30"
-              error={errors.start}
-            />
-            {errors.start && (
-              <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
-                {errors.start}
-              </p>
-            )}
-          </div>
-          <div>
-            <FieldLabel hint={endMode === 'duration' ? 'Seconds to clip' : 'HH:MM:SS or plain seconds'}>
-              {endMode === 'duration' ? 'Duration' : 'End time'}
-            </FieldLabel>
-            <BSSInput
-              value={end}
-              onChange={v => { setEnd(v); setErrors(e => ({ ...e, end: '' })); }}
-              placeholder={endMode === 'duration' ? '60' : '1:30 or 90'}
-              error={errors.end}
-            />
-            {errors.end && (
-              <p style={{ fontSize: 11, color: T.subtle, marginTop: 5, fontFamily: T.body }}>
-                {errors.end}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* End mode toggle + duration preview */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <div style={{
-            display: 'flex', border: `1px solid ${T.border}`,
-          }}>
-            {(['endtime', 'duration'] as const).map(val => (
-              <button
-                key={val}
-                onClick={() => { setEndMode(val); setErrors(e => ({ ...e, end: '' })); }}
-                style={{
-                  padding: '7px 18px',
-                  fontSize: 10, fontFamily: T.body, fontWeight: 500,
-                  letterSpacing: '0.12em', textTransform: 'uppercase',
-                  border: 'none', cursor: 'pointer',
-                  background: endMode === val ? T.white : 'transparent',
-                  color: endMode === val ? T.black : T.muted,
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-              >
-                {val === 'endtime' ? 'End time' : 'Duration'}
-              </button>
-            ))}
-          </div>
-
-          {duration != null && duration > 0 && (
-            <span style={{
-              fontSize: 11, fontFamily: T.body, fontWeight: 400, color: T.subtle,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                stroke={T.subtle} strokeWidth="1.5" strokeLinecap="round">
-                <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
-              </svg>
-              {formatDuration(duration)} clip
-              {duration > 3600 && (
-                <span style={{ color: T.muted }}> — exceeds 1 hour limit</span>
+              {errors.url && (
+                <p className="text-[11px] text-bss-subtle mt-1 font-body">{errors.url}</p>
               )}
-            </span>
-          )}
-        </div>
-
-        {/* Optional filename */}
-        <div>
-          <FieldLabel hint="Optional — defaults to clip.mp4">Save as</FieldLabel>
-          <BSSInput value={filename} onChange={setFilename} placeholder="my-clip" />
-        </div>
-
-        {/* Progress / preparing indicators */}
-        {status === 'downloading' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 11, fontFamily: T.body, color: T.subtle, fontWeight: 400 }}>
-                Streaming clip…
-              </span>
-              <span style={{ fontSize: 11, fontFamily: T.body, color: T.muted, fontWeight: 300 }}>
-                {(progress / 1024 / 1024).toFixed(1)} MB received
-              </span>
+              {videoId && (
+                <div className="mt-3 relative overflow-hidden border border-bss-border aspect-[16/5] max-h-[110px] bg-bss-black">
+                  <img
+                    src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                    alt="Video thumbnail"
+                    className="w-full h-full object-cover opacity-55 block"
+                  />
+                  <div className="absolute inset-0 flex items-center px-5">
+                    <p className="text-bss-white text-[12px] font-body font-normal tracking-[0.04em] m-0">
+                      Video found — set your clip times below
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div style={{ height: 1, background: T.border, overflow: 'hidden', position: 'relative' }}>
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: T.white,
-                animation: 'bss-bar 1.6s ease-in-out infinite',
-              }} />
+
+            {/* Timing row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <FieldLabel hint="HH:MM:SS or plain seconds">Start time</FieldLabel>
+                <BSSInput
+                  value={start}
+                  onChange={v => { setStart(v); setErrors(e => ({ ...e, start: '' })); }}
+                  placeholder="0:30 or 30"
+                  error={errors.start}
+                />
+                {errors.start && (
+                  <p className="text-[11px] text-bss-subtle mt-1 font-body">{errors.start}</p>
+                )}
+              </div>
+              <div>
+                <FieldLabel hint={endMode === 'duration' ? 'Seconds to clip' : 'HH:MM:SS or plain seconds'}>
+                  {endMode === 'duration' ? 'Duration' : 'End time'}
+                </FieldLabel>
+                <BSSInput
+                  value={end}
+                  onChange={v => { setEnd(v); setErrors(e => ({ ...e, end: '' })); }}
+                  placeholder={endMode === 'duration' ? '60' : '1:30 or 90'}
+                  error={errors.end}
+                />
+                {errors.end && (
+                  <p className="text-[11px] text-bss-subtle mt-1 font-body">{errors.end}</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
 
-        {status === 'preparing' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-              width: 5, height: 5, borderRadius: '50%', background: T.white,
-              animation: 'bss-pulse 1.2s ease-in-out infinite',
-            }} />
-            <span style={{ fontSize: 11, fontFamily: T.body, color: T.subtle, fontWeight: 400 }}>
-              Contacting server…
-            </span>
-          </div>
-        )}
+            {/* End mode toggle + duration preview */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex border border-bss-border">
+                {(['endtime', 'duration'] as const).map(val => (
+                  <button
+                    key={val}
+                    onClick={() => { setEndMode(val); setErrors(e => ({ ...e, end: '' })); }}
+                    className={[
+                      'px-[18px] py-[7px]',
+                      'text-[10px] font-body font-medium tracking-[0.12em] uppercase',
+                      'border-none cursor-pointer transition-colors duration-150',
+                      endMode === val
+                        ? 'bg-bss-white text-bss-black'
+                        : 'bg-transparent text-bss-muted hover:text-bss-subtle',
+                    ].join(' ')}
+                  >
+                    {val === 'endtime' ? 'End time' : 'Duration'}
+                  </button>
+                ))}
+              </div>
 
-        {/* Success */}
-        {status === 'done' && (
-          <div style={{
-            padding: '14px 16px', border: `1px solid ${T.border}`,
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke={T.white} strokeWidth="2" strokeLinecap="round">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-            <p style={{ fontSize: 13, color: T.offwhite, fontFamily: T.body, fontWeight: 300, margin: 0 }}>
-              Clip downloaded — check your downloads folder.
-            </p>
-          </div>
-        )}
+              {duration != null && duration > 0 && (
+                <span className="text-[11px] font-body font-normal text-bss-subtle flex items-center gap-1.5">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+                  </svg>
+                  {formatDuration(duration)} clip
+                  {duration > 3600 && (
+                    <span className="text-bss-muted"> — exceeds 1 hour limit</span>
+                  )}
+                </span>
+              )}
+            </div>
 
-        {/* Error */}
-        {status === 'error' && error && (
-          <div style={{
-            padding: '14px 16px', border: `1px solid ${T.border}`,
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke={T.subtle} strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}>
-              <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
-            </svg>
-            <p style={{ fontSize: 13, color: T.subtle, fontFamily: T.body, fontWeight: 300, margin: 0 }}>
-              {error}
-            </p>
-          </div>
-        )}
+            {/* Optional filename */}
+            <div>
+              <FieldLabel hint="Optional — defaults to clip.mp4">Save as</FieldLabel>
+              <BSSInput value={filename} onChange={setFilename} placeholder="my-clip" />
+            </div>
 
-        {/* ── Actions ── */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          paddingTop: 8, borderTop: `1px solid ${T.border}`,
-        }}>
-          {!busy && status !== 'done' && (
-            <button
-              onClick={handleTrim}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '12px 28px',
-                background: T.white, color: T.black,
-                fontFamily: T.body, fontSize: 13, fontWeight: 500, letterSpacing: '0.04em',
-                border: 'none', cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = T.offwhite)}
-              onMouseLeave={e => (e.currentTarget.style.background = T.white)}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Trim &amp; Download
-            </button>
-          )}
+            {/* Progress indicators */}
+            {status === 'downloading' && (
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-[11px] font-body text-bss-subtle font-light">Streaming clip…</span>
+                  <span className="text-[11px] font-body text-bss-muted font-light">
+                    {(progress / 1024 / 1024).toFixed(1)} MB received
+                  </span>
+                </div>
+                <div className="h-px bg-bss-border overflow-hidden relative">
+                  <div className="absolute inset-0 bg-bss-white animate-[bss-bar_1.6s_ease-in-out_infinite]" />
+                </div>
+              </div>
+            )}
 
-          {busy && (
-            <button
-              onClick={handleCancel}
-              style={{
-                padding: '12px 24px',
-                background: 'transparent', color: T.muted,
-                fontFamily: T.body, fontSize: 13, fontWeight: 400,
-                border: `1px solid ${T.border}`, cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-          )}
+            {status === 'preparing' && (
+              <div className="flex items-center gap-2">
+                <span className="w-[5px] h-[5px] rounded-full bg-bss-white animate-[bss-pulse_1.2s_ease-in-out_infinite]" />
+                <span className="text-[11px] font-body text-bss-subtle font-light">Contacting server…</span>
+              </div>
+            )}
 
-          {status === 'done' && (
-            <button
-              onClick={handleReset}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '12px 28px',
-                background: T.white, color: T.black,
-                fontFamily: T.body, fontSize: 13, fontWeight: 500, letterSpacing: '0.04em',
-                border: 'none', cursor: 'pointer',
-              }}
-            >
-              Trim another clip
-            </button>
-          )}
-
-          {status === 'error' && (
-            <button
-              onClick={handleReset}
-              style={{
-                padding: '12px 24px',
-                background: 'transparent', color: T.muted,
-                fontFamily: T.body, fontSize: 13, fontWeight: 400,
-                border: `1px solid ${T.border}`, cursor: 'pointer',
-              }}
-            >
-              Try again
-            </button>
-          )}
-
-          <a
-            href={`${API_BASE}/health`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              marginLeft: 'auto',
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontSize: 10, fontFamily: T.body, fontWeight: 400,
-              letterSpacing: '0.1em', textTransform: 'uppercase',
-              color: T.muted, textDecoration: 'none',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = T.subtle)}
-            onMouseLeave={e => (e.currentTarget.style.color = T.muted)}
-          >
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
-            </svg>
-            Server status
-          </a>
-        </div>
-
-        {/* ── How it works ── */}
-        <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 28 }}>
-          <p style={{
-            fontFamily: T.body, fontSize: 10, fontWeight: 500,
-            letterSpacing: '0.16em', textTransform: 'uppercase', color: T.muted, marginBottom: 20,
-          }}>
-            How it works
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24 }}>
-            {([
-              ['Paste URL',  'Any youtube.com or youtu.be link works.'],
-              ['Set times',  'Use HH:MM:SS, M:SS, or plain seconds like 90.'],
-              ['Download',   'The clip streams directly to you — nothing stored on the server.'],
-            ] as const).map(([title, desc]) => (
-              <div key={title}>
-                <p style={{
-                  fontFamily: T.display, fontSize: '1rem', fontWeight: 700,
-                  color: T.white, margin: '0 0 6px',
-                }}>
-                  {title}
-                </p>
-                <p style={{
-                  fontFamily: T.body, fontSize: 12, fontWeight: 300,
-                  color: T.subtle, margin: 0, lineHeight: 1.7,
-                }}>
-                  {desc}
+            {/* Success */}
+            {status === 'done' && (
+              <div className="p-4 border border-bss-border flex items-center gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                  className="text-bss-white shrink-0">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <p className="text-[13px] text-bss-offwhite font-body font-light m-0">
+                  Clip downloaded — check your downloads folder.
                 </p>
               </div>
-            ))}
+            )}
+
+            {/* Error */}
+            {status === 'error' && error && (
+              <div className="p-4 border border-bss-border flex items-start gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                  className="text-bss-subtle shrink-0 mt-0.5">
+                  <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
+                </svg>
+                <p className="text-[13px] text-bss-subtle font-body font-light m-0">{error}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 pt-2 border-t border-bss-border">
+              {!busy && status !== 'done' && (
+                <button onClick={handleTrim} className="btn-primary">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Trim &amp; Download
+                </button>
+              )}
+
+              {busy && (
+                <button
+                  onClick={handleCancel}
+                  className="px-6 py-3 bg-transparent text-bss-muted font-body text-[13px] font-normal border border-bss-border cursor-pointer hover:border-bss-muted transition-colors duration-150"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {status === 'done' && (
+                <button onClick={handleReset} className="btn-primary">
+                  Trim another clip
+                </button>
+              )}
+
+              {status === 'error' && (
+                <button
+                  onClick={handleReset}
+                  className="px-6 py-3 bg-transparent text-bss-muted font-body text-[13px] font-normal border border-bss-border cursor-pointer hover:border-bss-muted transition-colors duration-150"
+                >
+                  Try again
+                </button>
+              )}
+
+              <a
+                href={`${API_BASE}/health`}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-body font-normal tracking-[0.1em] uppercase text-bss-muted hover:text-bss-subtle transition-colors duration-150 no-underline"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+                </svg>
+                Server status
+              </a>
+            </div>
+
+            {/* How it works */}
+            <div className="border-t border-bss-border pt-7">
+              <p className="eyebrow mb-5">How it works</p>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-6">
+                {([
+                  ['Paste URL',  'Any youtube.com or youtu.be link works.'],
+                  ['Set times',  'Use HH:MM:SS, M:SS, or plain seconds like 90.'],
+                  ['Download',   'The clip streams directly to you — nothing stored on the server.'],
+                ] as const).map(([title, desc]) => (
+                  <div key={title}>
+                    <p className="font-display text-base font-bold text-bss-white mb-1.5 m-0">{title}</p>
+                    <p className="font-body text-[12px] font-light text-bss-subtle leading-relaxed m-0">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
-
-      </div>
+      </section>
     </>
   );
 }
