@@ -500,7 +500,7 @@ export default function SignPage() {
       if (pageMode === 'all') {
         targetPages = pages.map((_: any, i: number) => i);
       } else if (pageMode === 'select') {
-        targetPages = [...selectedPages].map(p => p - 1);
+        targetPages = Array.from(selectedPages).map(p => p - 1);
       } else {
         targetPages = [currentPage - 1];
       }
