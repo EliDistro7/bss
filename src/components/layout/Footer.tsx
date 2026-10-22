@@ -5,14 +5,21 @@ import { useLang } from '../../lib/i18n/LanguageContext'
 
 const WHATSAPP_NUMBER = '255617833806'
 
+const TOOLS = [
+  { href: '/clip',     label: 'Clip Trimmer' },
+  { href: '/qr',       label: 'QR Generator' },
+  { href: '/sign',     label: 'Sign Document' },
+  { href: '/currency', label: 'Currency Converter' },
+]
+
 export default function Footer() {
   const { t } = useLang()
   const year = new Date().getFullYear()
 
   const col1 = [
-    { href: '/',          label: t.nav.home },
-    { href: '/about',     label: t.nav.about },
-    { href: '/services/profile',  label: t.nav.services },
+    { href: '/',                 label: t.nav.home },
+    { href: '/about',            label: t.nav.about },
+    { href: '/services/profile', label: t.nav.services },
   ]
   const col2 = [
     { href: '/portfolio', label: t.nav.portfolio },
@@ -39,7 +46,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
 
           {/* Brand — takes up half */}
-          <div className="md:col-span-6">
+          <div className="md:col-span-5">
             <Link href="/" className="inline-block mb-8">
               <span className="font-display text-4xl md:text-5xl font-bold text-bss-white tracking-tightest">
                 Bari Software Services
@@ -60,7 +67,7 @@ export default function Footer() {
           </div>
 
           {/* Spacer */}
-          <div className="hidden md:block md:col-span-2" />
+          <div className="hidden md:block md:col-span-1" />
 
           {/* Nav col 1 */}
           <div className="md:col-span-2">
@@ -97,6 +104,25 @@ export default function Footer() {
               ))}
             </ul>
           </div>
+
+          {/* Tools col */}
+          <div className="md:col-span-2">
+            <p className="eyebrow mb-8">Free Tools</p>
+            <ul className="flex flex-col gap-5">
+              {TOOLS.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="font-display text-2xl font-bold text-bss-muted
+                               hover:text-bss-white transition-colors duration-200"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
         </div>
 
         {/* ── Bottom bar ───────────────────────────────────────────────── */}
