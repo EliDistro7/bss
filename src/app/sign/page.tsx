@@ -614,6 +614,18 @@ export default function SignPage() {
           {/* ══ STEP 1 — Upload ══════════════════════════════════════════ */}
           {step === 'upload' && (
             <>
+                {/* Hidden file input — enables native file picker on mobile and desktop */}
+    <input
+      id="pdf-input"
+      type="file"
+      accept=".pdf,application/pdf"
+      className="hidden"
+      onChange={e => {
+        const file = e.target.files?.[0];
+        if (file) handleFile(file);
+        e.target.value = '';
+      }}
+    />
               <div
                 ref={dropRef}
                 onDragOver={e => { e.preventDefault(); dropRef.current?.classList.add('bss-drop-active'); }}
