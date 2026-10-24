@@ -152,21 +152,21 @@ function SigPreview({ dataUrl }: { dataUrl: string | null }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function SignPage() {
-  const [step, setStep]             = useState<Step>('upload');
-  const [signMode, setSignMode]     = useState<SignMode>('draw');
-  const [pdfFile, setPdfFile]       = useState<File | null>(null);
-  const [pdfBytes, setPdfBytes]     = useState<ArrayBuffer | null>(null);
-  const [pageCount, setPageCount]   = useState(0);
+  const [step, setStep]               = useState<Step>('upload');
+  const [signMode, setSignMode]       = useState<SignMode>('draw');
+  const [pdfFile, setPdfFile]         = useState<File | null>(null);
+  const [pdfBytes, setPdfBytes]       = useState<ArrayBuffer | null>(null);
+  const [pageCount, setPageCount]     = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sig, setSig]               = useState<SignatureState | null>(null);
-  const [dragging, setDragging]     = useState(false);
-  const [resizing, setResizing]     = useState(false);
-  const [sigPos, setSigPos]         = useState({ x: 60, y: 60 });
-  const [sigSize, setSigSize]       = useState({ w: 180, h: 72 });
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
-  const [outputUrl, setOutputUrl]   = useState('');
-  const [outputName, setOutputName] = useState('');
+  const [sig, setSig]                 = useState<SignatureState | null>(null);
+  const [dragging, setDragging]       = useState(false);
+  const [resizing, setResizing]       = useState(false);
+  const [sigPos, setSigPos]           = useState({ x: 60, y: 60 });
+  const [sigSize, setSigSize]         = useState({ w: 180, h: 72 });
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
+  const [outputUrl, setOutputUrl]     = useState('');
+  const [outputName, setOutputName]   = useState('');
 
   // Draw mode
   const [inkColor, setInkColor]             = useState(INK_SWATCHES[0].color);
@@ -210,10 +210,12 @@ export default function SignPage() {
     el.textContent = `
       .bss-drop-active { border-color: #ffffff !important; }
       .sig-handle {
-        position: absolute; bottom: -6px; right: -6px;
-        width: 16px; height: 16px;
+        position: absolute; bottom: -12px; right: -12px;
+        width: 28px; height: 28px;
         background: #ffffff; cursor: se-resize;
-        border: 1px solid #000000; touch-action: none;
+        border: 1.5px solid #000000; touch-action: none;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
       }
       .sig-overlay { position: absolute; cursor: grab; user-select: none; touch-action: none; }
       .sig-overlay:active { cursor: grabbing; }
@@ -396,15 +398,24 @@ export default function SignPage() {
     });
   }
 
+  // ── Canvas-aware initial signature size ────────────────────────────────────
+  // Targets 30% of the PDF canvas display width, capped at 220px, min 60px.
+  function calcInitialSigSize(aspect: number): { w: number; h: number } {
+    const canvasW = pdfCanvasRef.current?.clientWidth ?? 600;
+    const w = Math.min(220, Math.max(60, Math.round(canvasW * 0.30)));
+    const h = Math.round(w / aspect);
+    return { w, h };
+  }
+
   // ── Confirm signatures ─────────────────────────────────────────────────────
   async function confirmDrawSig() {
     const pad = sigPadRef.current;
     if (!pad || pad.isEmpty()) { setError('Draw your signature first.'); return; }
     setError('');
     const { url, aspect } = await trimCanvasToPng(pad.toDataURL('image/png'));
-    const dispH = 72, dispW = Math.round(dispH * aspect);
-    setSig({ dataUrl: url, width: dispW, height: dispH, x: 0, y: 0 });
-    setSigPos({ x: 60, y: 60 }); setSigSize({ w: dispW, h: dispH });
+    const { w, h } = calcInitialSigSize(aspect);
+    setSig({ dataUrl: url, width: w, height: h, x: 0, y: 0 });
+    setSigPos({ x: 60, y: 60 }); setSigSize({ w, h });
     try { localStorage.setItem(SAVED_SIG_KEY, url); setSavedSig(url); } catch {}
     setStep('place');
   }
@@ -412,9 +423,9 @@ export default function SignPage() {
   async function useSavedSig() {
     if (!savedSig) return;
     const { aspect } = await trimCanvasToPng(savedSig);
-    const dispH = 72, dispW = Math.round(dispH * aspect);
-    setSig({ dataUrl: savedSig, width: dispW, height: dispH, x: 0, y: 0 });
-    setSigPos({ x: 60, y: 60 }); setSigSize({ w: dispW, h: dispH });
+    const { w, h } = calcInitialSigSize(aspect);
+    setSig({ dataUrl: savedSig, width: w, height: h, x: 0, y: 0 });
+    setSigPos({ x: 60, y: 60 }); setSigSize({ w, h });
     setStep('place');
   }
 
@@ -423,14 +434,16 @@ export default function SignPage() {
     setError('');
     if (!typePreviewRef.current) return;
     const { url, aspect } = await trimCanvasToPng(typePreviewRef.current.toDataURL('image/png'));
-    const dispH = 72, dispW = Math.round(dispH * aspect);
-    setSig({ dataUrl: url, width: dispW, height: dispH, x: 0, y: 0 });
-    setSigPos({ x: 60, y: 60 }); setSigSize({ w: dispW, h: dispH });
+    const { w, h } = calcInitialSigSize(aspect);
+    setSig({ dataUrl: url, width: w, height: h, x: 0, y: 0 });
+    setSigPos({ x: 60, y: 60 }); setSigSize({ w, h });
     setStep('place');
   }
 
-  // ── Pointer drag ───────────────────────────────────────────────────────────
+  // ── Pointer drag (desktop) ─────────────────────────────────────────────────
   function onSigPointerDown(e: React.PointerEvent) {
+    // Ignore if touch — handled by touch events to avoid double-firing
+    if (e.pointerType === 'touch') return;
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const rect = pdfCanvasRef.current!.getBoundingClientRect();
@@ -438,7 +451,7 @@ export default function SignPage() {
     setDragging(true);
   }
   function onSigPointerMove(e: React.PointerEvent) {
-    if (!dragging) return;
+    if (e.pointerType === 'touch' || !dragging) return;
     const rect = pdfCanvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     setSigPos({
@@ -446,22 +459,67 @@ export default function SignPage() {
       y: Math.max(0, Math.min(e.clientY - rect.top  - dragOff.current.y, rect.height - sigSize.h)),
     });
   }
-  function onSigPointerUp() { setDragging(false); }
+  function onSigPointerUp(e: React.PointerEvent) {
+    if (e.pointerType === 'touch') return;
+    setDragging(false);
+  }
 
-  // ── Pointer resize ─────────────────────────────────────────────────────────
+  // ── Touch drag (mobile) ────────────────────────────────────────────────────
+  function onSigTouchStart(e: React.TouchEvent) {
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = pdfCanvasRef.current!.getBoundingClientRect();
+    dragOff.current = { x: t.clientX - rect.left - sigPos.x, y: t.clientY - rect.top - sigPos.y };
+    setDragging(true);
+  }
+  function onSigTouchMove(e: React.TouchEvent) {
+    if (!dragging) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = pdfCanvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setSigPos({
+      x: Math.max(0, Math.min(t.clientX - rect.left - dragOff.current.x, rect.width  - sigSize.w)),
+      y: Math.max(0, Math.min(t.clientY - rect.top  - dragOff.current.y, rect.height - sigSize.h)),
+    });
+  }
+  function onSigTouchEnd() { setDragging(false); }
+
+  // ── Pointer resize (desktop) ───────────────────────────────────────────────
   function onResizePointerDown(e: React.PointerEvent) {
+    if (e.pointerType === 'touch') return;
     e.preventDefault(); e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     resizeStart.current = { mx: e.clientX, my: e.clientY, w: sigSize.w, h: sigSize.h };
     setResizing(true);
   }
   function onResizePointerMove(e: React.PointerEvent) {
-    if (!resizing) return;
+    if (e.pointerType === 'touch' || !resizing) return;
     const aspect = sig ? sig.width / sig.height : 1;
-    const nw = Math.max(60, resizeStart.current.w + (e.clientX - resizeStart.current.mx));
+    const nw = Math.max(40, resizeStart.current.w + (e.clientX - resizeStart.current.mx));
     setSigSize({ w: nw, h: Math.round(nw / aspect) });
   }
-  function onResizePointerUp() { setResizing(false); }
+  function onResizePointerUp(e: React.PointerEvent) {
+    if (e.pointerType === 'touch') return;
+    setResizing(false);
+  }
+
+  // ── Touch resize (mobile) ──────────────────────────────────────────────────
+  function onResizeTouchStart(e: React.TouchEvent) {
+    e.preventDefault(); e.stopPropagation();
+    const t = e.touches[0];
+    resizeStart.current = { mx: t.clientX, my: t.clientY, w: sigSize.w, h: sigSize.h };
+    setResizing(true);
+  }
+  function onResizeTouchMove(e: React.TouchEvent) {
+    if (!resizing) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const aspect = sig ? sig.width / sig.height : 1;
+    const nw = Math.max(40, resizeStart.current.w + (t.clientX - resizeStart.current.mx));
+    setSigSize({ w: nw, h: Math.round(nw / aspect) });
+  }
+  function onResizeTouchEnd() { setResizing(false); }
 
   // ── Zoom ───────────────────────────────────────────────────────────────────
   function handleZoom(dir: 'in' | 'out') {
@@ -572,7 +630,7 @@ export default function SignPage() {
   // ══════════════════════════════════════════════════════════════════════════
   return (
     <>
-      {/* ── PAGE HEADER — matches About page pattern ──────────────────── */}
+      {/* ── PAGE HEADER ───────────────────────────────────────────────── */}
       <section className="pt-36 pb-20 border-b border-bss-border">
         <div className="container-site">
           <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -614,18 +672,19 @@ export default function SignPage() {
           {/* ══ STEP 1 — Upload ══════════════════════════════════════════ */}
           {step === 'upload' && (
             <>
-                {/* Hidden file input — enables native file picker on mobile and desktop */}
-    <input
-      id="pdf-input"
-      type="file"
-      accept=".pdf,application/pdf"
-      className="hidden"
-      onChange={e => {
-        const file = e.target.files?.[0];
-        if (file) handleFile(file);
-        e.target.value = '';
-      }}
-    />
+              {/* Hidden file input — enables native file picker on mobile and desktop */}
+              <input
+                id="pdf-input"
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFile(file);
+                  e.target.value = '';
+                }}
+              />
+
               <div
                 ref={dropRef}
                 onDragOver={e => { e.preventDefault(); dropRef.current?.classList.add('bss-drop-active'); }}
@@ -643,7 +702,7 @@ export default function SignPage() {
                 </svg>
                 <div>
                   <p className="font-display text-lg font-bold text-bss-white mb-1.5">Drop a PDF here</p>
-                  <p className="font-body text-xs text-bss-muted font-light">or click to browse — PDF files only</p>
+                  <p className="font-body text-xs text-bss-muted font-light">or tap to browse — PDF files only</p>
                 </div>
                 {loading && <p className="font-body text-[11px] text-bss-subtle tracking-[0.1em]">Loading…</p>}
               </div>
@@ -943,6 +1002,11 @@ export default function SignPage() {
                 )}
               </div>
 
+              {/* Resize hint for mobile */}
+              <p className="font-body text-[11px] text-bss-muted font-light md:hidden">
+                Drag the signature to move it. Use the ◎ handle at the bottom-right corner to resize.
+              </p>
+
               {/* PDF canvas */}
               <div className="relative border border-bss-border leading-[0] overflow-hidden">
                 <canvas ref={pdfCanvasRef} className="block w-full h-auto" />
@@ -951,16 +1015,30 @@ export default function SignPage() {
                   onPointerDown={onSigPointerDown}
                   onPointerMove={onSigPointerMove}
                   onPointerUp={onSigPointerUp}
+                  onTouchStart={onSigTouchStart}
+                  onTouchMove={onSigTouchMove}
+                  onTouchEnd={onSigTouchEnd}
                   style={{ left: sigPos.x, top: sigPos.y, width: sigSize.w, height: sigSize.h, outline: '1px dashed #555555' }}
                 >
                   <img src={sig.dataUrl} draggable={false} alt="signature"
                     className="w-full h-full object-contain block pointer-events-none" />
+                  {/* Resize handle — larger round target for touch */}
                   <div
                     className="sig-handle"
                     onPointerDown={onResizePointerDown}
                     onPointerMove={onResizePointerMove}
                     onPointerUp={onResizePointerUp}
-                  />
+                    onTouchStart={onResizeTouchStart}
+                    onTouchMove={onResizeTouchMove}
+                    onTouchEnd={onResizeTouchEnd}
+                  >
+                    {/* Resize arrow icon */}
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                      xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
+                      <path d="M1 9L9 1M5 9H9V5" stroke="#000000" strokeWidth="1.5"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
 
