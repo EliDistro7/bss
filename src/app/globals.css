@@ -24,7 +24,7 @@
   }
 
   body {
-    background-color: #000000;
+    background-color: #222222;
     color: #e8e8e8;
     font-family: var(--font-body);
     font-weight: 300;
@@ -57,8 +57,8 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #000; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: #222222; }
+  ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: #555; }
 }
 

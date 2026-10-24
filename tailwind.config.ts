@@ -10,14 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         bss: {
-          black:   '#000000',
-          surface: '#0c0c0c',
-          card:    '#141414',
-          border:  '#222222',
-          muted:   '#555555',
-          subtle:  '#888888',
-          white:   '#ffffff',
-          offwhite:'#e8e8e8',
+          black:    '#222222',
+          surface:  '#2a2a2a',
+          card:     '#303030',
+          border:   '#3a3a3a',
+          muted:    '#666666',
+          subtle:   '#888888',
+          white:    '#ffffff',
+          offwhite: '#e8e8e8',
         },
       },
       fontFamily: {
@@ -49,34 +49,34 @@ const config: Config = {
         widest:   '0.2em',
       },
       spacing: {
-        '18': '4.5rem',
-        '22': '5.5rem',
-        '30': '7.5rem',
-        '36': '9rem',
-        '42': '10.5rem',
+        '18':  '4.5rem',
+        '22':  '5.5rem',
+        '30':  '7.5rem',
+        '36':  '9rem',
+        '42':  '10.5rem',
         '100': '25rem',
         '128': '32rem',
       },
       maxWidth: {
-        site: '1400px',
-        prose: '680px',
+        site:   '1400px',
+        prose:  '680px',
         narrow: '480px',
       },
       animation: {
         'fade-up':  'fadeUp 0.6s ease forwards',
         'fade-in':  'fadeIn 0.5s ease forwards',
         'slide-in': 'slideIn 0.4s ease forwards',
-        'marquee': 'marquee 30s linear infinite',
+        'marquee':  'marquee 30s linear infinite',
       },
       keyframes: {
         marquee: {
-  '0%':   { transform: 'translateX(0)' },
-  '100%': { transform: 'translateX(-50%)' },
-},
-  'card-in': {
-    '0%':   { opacity: '0', transform: 'translateY(16px)' },
-    '100%': { opacity: '1', transform: 'translateY(0)' },
-  },
+          '0%':   { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        'card-in': {
+          '0%':   { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         fadeUp: {
           '0%':   { opacity: '0', transform: 'translateY(24px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
